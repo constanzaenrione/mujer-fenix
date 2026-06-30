@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Identidad Mujer Fénix</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--mo:#4B168E;--do:#D4AC00;--lv:#D6CDEA;--ll:#EEE8F7;--fo:#F7F3FB;--tx:#1a1a2e;--su:#6b6b8a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--fo);color:var(--tx);min-height:100vh;overflow-x:hidden}
+.screen{display:none;min-height:100vh;flex-direction:column}.screen.active{display:flex}
+.hdr{background:var(--mo);padding:1rem 1.2rem;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+.hdr h1{font-family:'Playfair Display',serif;color:var(--do);font-size:17px;font-weight:600}
+.hdr .sub{font-size:10px;color:rgba(255,255,255,.65);margin-top:1px}
+.bk{background:none;border:none;cursor:pointer;color:var(--do);font-size:20px;padding:4px 8px 4px 0}
+.pb{background:rgba(255,255,255,.15);height:3px}.pf{background:var(--do);height:3px;transition:width .4s}
+.cnt{flex:1;padding:1.4rem 1.3rem;overflow-y:auto}
+.hero{text-align:center;padding:1.5rem 0 1rem}
+.hi{font-size:52px;display:block;margin-bottom:1rem;animation:fl 3s ease-in-out infinite}
+@keyframes fl{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.hero h2{font-family:'Playfair Display',serif;font-size:24px;color:var(--mo);margin-bottom:.5rem}
+.hero p{color:var(--su);font-size:14px;line-height:1.65;max-width:300px;margin:0 auto}
+.ml{display:flex;flex-direction:column;gap:9px;margin-top:1.2rem}
+.mc{background:white;border-radius:14px;padding:1rem 1.1rem;display:flex;align-items:center;gap:12px;cursor:pointer;border:1.5px solid transparent;transition:all .2s}
+.mc:active{transform:scale(.98)}.mc.dn{border-color:var(--do)}.mc.lk{opacity:.45;cursor:not-allowed}
+.mi{width:42px;height:42px;border-radius:11px;background:var(--ll);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.mc.dn .mi{background:#FFF8E0}
+.mif{flex:1}.mif h3{font-size:13px;font-weight:500}.mif p{font-size:11px;color:var(--su);margin-top:2px}
+.mb{font-size:10px;padding:3px 8px;border-radius:20px;font-weight:500;white-space:nowrap}
+.bd{background:#FFF8E0;color:#9a7a00}.bn{background:var(--ll);color:var(--mo)}.bl{background:#f0f0f0;color:#aaa}
+.fa{text-align:center;margin:1.2rem 0}
+.fc{width:82px;height:82px;border-radius:50%;background:var(--ll);border:2px dashed var(--lv);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto .6rem;cursor:pointer;overflow:hidden}
+.fc img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.fl{font-size:11px;color:var(--su)}
+.pn{font-size:10px;color:var(--do);font-weight:500;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}
+.pt{font-family:'Playfair Display',serif;font-size:21px;color:var(--mo);line-height:1.3;margin-bottom:7px}
+.pd{font-size:13px;color:var(--su);line-height:1.65;margin-bottom:1.2rem}
+.cm{margin-bottom:1.3rem}
+.cm label{display:block;font-size:12px;font-weight:500;margin-bottom:6px}
+.cm input,.cm textarea{width:100%;padding:11px 13px;border:1.5px solid var(--lv);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;transition:border-color .2s;resize:none}
+.cm input:focus,.cm textarea:focus{border-color:var(--mo)}
+.cks{display:flex;flex-direction:column;gap:7px}
+.ck{display:flex;align-items:center;gap:11px;padding:9px 12px;background:white;border-radius:10px;border:1.5px solid var(--lv);cursor:pointer;transition:all .15s;font-size:13px}
+.ck.sl{border-color:var(--mo);background:var(--ll)}
+.cb{width:19px;height:19px;border-radius:5px;border:1.5px solid var(--lv);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:12px}
+.ck.sl .cb{background:var(--mo);border-color:var(--mo);color:white}
+.rds{display:flex;flex-direction:column;gap:7px}
+.rd{display:flex;align-items:flex-start;gap:11px;padding:9px 12px;background:white;border-radius:10px;border:1.5px solid var(--lv);cursor:pointer;transition:all .15s;font-size:13px;line-height:1.5}
+.rd.sl{border-color:var(--mo);background:var(--ll)}
+.rdot{width:19px;height:19px;border-radius:50%;border:1.5px solid var(--lv);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.rd.sl .rdot{border-color:var(--mo);background:var(--mo)}
+.rd.sl .rdot::after{content:'';width:7px;height:7px;border-radius:50%;background:white}
+.ag{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.ar{padding:11px 8px;background:white;border-radius:10px;border:1.5px solid var(--lv);cursor:pointer;transition:all .15s;text-align:center;font-size:12px}
+.ar .ai{font-size:22px;display:block;margin-bottom:3px}
+.ar.sl{border-color:var(--mo);background:var(--ll);color:var(--mo);font-weight:500}
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:.5rem}
+.tgi{padding:9px 8px;text-align:center;border:1.5px solid var(--lv);border-radius:10px;cursor:pointer;font-size:12px;background:white;transition:all .15s}
+.tgi .ti{font-size:18px;display:block;margin-bottom:3px}
+.tgi.sl{border-color:var(--do);background:#FFF8E0;color:#9a7a00;font-weight:500}
+.ht{background:var(--ll);border-radius:9px;padding:9px 12px;font-size:11px;color:var(--su);line-height:1.5;margin-bottom:1rem;border-left:2px solid var(--mo)}
+.btn{width:100%;border:none;border-radius:12px;padding:14px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;margin-top:.9rem}
+.bp{background:var(--mo);color:white}.bp:active{transform:scale(.98);background:#3a1170}
+.bs{background:transparent;color:var(--mo);border:1.5px solid var(--mo)}
+.cps{display:flex;flex-direction:column;gap:5px;margin:1rem 0}
+.cpr{display:flex;align-items:center;gap:9px;padding:9px 11px;background:white;border-radius:9px;font-size:12px}
+.cd{width:7px;height:7px;border-radius:50%;flex-shrink:0}.cd.on{background:var(--do)}.cd.off{background:var(--lv)}
+.fcd{background:white;border-radius:16px;overflow:hidden;border:1px solid var(--lv);margin-bottom:1rem}
+.fhd{background:var(--mo);padding:1.3rem;display:flex;align-items:center;gap:1rem}
+.ffo{width:60px;height:60px;border-radius:50%;border:2px solid var(--do);object-fit:cover;background:var(--ll);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;overflow:hidden}
+.fnm{color:white;font-family:'Playfair Display',serif;font-size:17px}
+.faq{color:var(--do);font-size:12px;margin-top:2px}
+.fmb{font-size:9px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.85);padding:2px 7px;border-radius:20px;margin-top:4px;display:inline-block}
+.fbd{padding:1.1rem 1.3rem}
+.fsc{margin-bottom:1.1rem}
+.fsc h4{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--do);margin-bottom:7px;font-weight:500}
+.fts{display:flex;flex-wrap:wrap;gap:5px}
+.ft{background:var(--ll);color:var(--mo);border-radius:20px;padding:3px 10px;font-size:11px}
+.fb{background:var(--mo);border-radius:12px;padding:1rem 1.2rem 1rem 2rem;color:white;font-style:italic;line-height:1.7;font-size:13px;position:relative}
+.fb::before{content:'"';font-size:44px;color:var(--do);position:absolute;top:-6px;left:10px;font-family:'Playfair Display',serif;opacity:.55}
+.nb{background:var(--ll);border-radius:12px;padding:1.1rem;margin:.8rem 0;border-left:3px solid var(--mo)}
+.nt{font-family:'Playfair Display',serif;color:var(--mo);font-size:15px;margin-bottom:.7rem}
+.ntx{font-size:13px;line-height:1.85;color:var(--tx)}
+.ld{display:flex;align-items:center;gap:9px;color:var(--su);font-size:12px}
+.ds{display:flex;gap:3px}
+.ds span{width:5px;height:5px;border-radius:50%;background:var(--mo);animation:pu 1.4s infinite}
+.ds span:nth-child(2){animation-delay:.2s}.ds span:nth-child(3){animation-delay:.4s}
+@keyframes pu{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.ctb{background:white;border-radius:16px;border:1px solid var(--lv);padding:1.4rem;margin:.8rem 0;position:relative}
+.ctb::before{content:'';position:absolute;top:0;right:0;width:0;height:0;border-style:solid;border-width:0 32px 32px 0;border-color:transparent var(--do) transparent transparent;border-radius:0 16px 0 0}
+.cth{margin-bottom:1rem}
+.ctd{font-size:11px;color:var(--su)}
+.ctt{font-family:'Playfair Display',serif;color:var(--mo);font-size:18px;margin-top:2px}
+.ctx{font-size:13px;line-height:1.9;color:var(--tx);white-space:pre-wrap}
+.ctx[contenteditable="true"]{outline:none;border-bottom:1px dashed var(--lv);padding-bottom:4px}
+.ctf{margin-top:1rem;font-style:italic;color:var(--mo);font-family:'Playfair Display',serif;font-size:14px}
+.ceh{font-size:10px;color:var(--su);text-align:center;margin-top:.5rem}
+.sep{height:1px;background:var(--lv);margin:1.2rem 0}
+.ftr{text-align:center;padding:1rem;font-size:10px;color:var(--su)}
+.ftr a{color:var(--mo);text-decoration:none;font-weight:500}
+.fdo{color:var(--do);margin:0 5px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="screen" id="s-welcome">
+  <div class="hdr"><div><h1>Identidad Mujer Fénix ✦</h1><div class="sub">Academia Mujer Fénix 40+</div></div></div>
+  <div class="cnt">
+    <div class="hero">
+      <span class="hi">🔥</span>
+      <h2>Tu identidad<br>te espera</h2>
+      <p>Un ejercicio guiado para construir, capa a capa, a la mujer que estás eligiendo ser.</p>
+    </div>
+    <div class="cm" style="margin-top:1.5rem"><label>¿Cómo te llamas?</label><input type="text" id="inp-nombre" placeholder="Tu nombre..."></div>
+    <div class="fa">
+      <div class="fc" onclick="document.getElementById('inp-foto').click()">
+        <img id="prev-foto" src="" style="display:none">
+        <span id="foto-ph" style="font-size:22px">📷</span>
+      </div>
+      <input type="file" id="inp-foto" accept="image/*" style="display:none">
+      <div class="fl">Agrega tu foto — aparecerá en tu Ficha Fénix</div>
+    </div>
+    <button class="btn bp" onclick="iniciar()">Comenzar mi viaje →</button>
+    <div class="cps" style="margin-top:1.5rem">
+      <div style="font-size:11px;color:var(--su);margin-bottom:3px;font-weight:500">Lo que construirás:</div>
+      <div class="cpr"><div class="cd on"></div><span>🌱 Mi Identidad Mujer Fénix</span></div>
+      <div class="cpr"><div class="cd off"></div><span>⚡ Capa Energía</span></div>
+      <div class="cpr"><div class="cd off"></div><span>💜 Capa Confianza</span></div>
+      <div class="cpr"><div class="cd off"></div><span>🌸 Capa Cuerpo</span></div>
+      <div class="cpr"><div class="cd off"></div><span>✨ Capa Disfrute</span></div>
+    </div>
+  </div>
+  <div class="ftr">Academia Mujer Fénix 40+</div>
+</div>
+
+<div class="screen" id="s-modulos">
+  <div class="hdr"><div style="flex:1"><h1 id="h-nombre">Mi Ficha Fénix</h1><div class="sub">Elige el módulo que estás trabajando</div></div><button onclick="cerrarSesion()" style="background:none;border:none;color:rgba(255,255,255,.6);font-size:11px;cursor:pointer;padding:4px 0">Salir</button></div>
+  <div class="cnt">
+    <div style="text-align:center;margin-bottom:1.3rem">
+      <div id="mod-foto" style="width:58px;height:58px;border-radius:50%;background:var(--ll);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 6px;border:2px solid var(--do);overflow:hidden">🔥</div>
+      <div style="font-size:11px;color:var(--su)" id="est-mods">Comenzando el viaje</div>
+    </div>
+    <div class="ml" id="lista-mods"></div>
+  </div>
+  <div class="ftr">Academia Mujer Fénix 40+</div>
+</div>
+
+<div class="screen" id="s-ejercicio">
+  <div class="hdr">
+    <button class="bk" onclick="goMods()">←</button>
+    <div style="flex:1">
+      <h1 id="ej-tit">Módulo</h1>
+      <div class="pb" style="margin-top:4px;border-radius:2px;overflow:hidden"><div class="pf" id="ej-prog" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="cnt" id="ej-cnt"></div>
+</div>
+
+<div class="screen" id="s-ficha">
+  <div class="hdr"><button class="bk" onclick="goMods()">←</button><div><h1>Mi Ficha Fénix</h1><div class="sub">Identidad en construcción</div></div></div>
+  <div class="cnt" id="ficha-cnt"></div>
+</div>
+
+<div class="screen" id="s-carta">
+  <div class="hdr"><button class="bk" onclick="goMods()">←</button><div><h1>Carta de mi Yo Futuro</h1><div class="sub">Un mensaje desde quien ya eres</div></div></div>
+  <div class="cnt" id="carta-cnt"></div>
+</div>
+
+<script>
+// SUPABASE CONFIG
+const SUPA_URL = 'https://zcovuvkqsmnedfnevmpm.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpjb3Z1dmtxc21uZWRmbmV2bXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4NDUyOTIsImV4cCI6MjA5ODQyMTI5Mn0.1VXulShYlMcTsqUgSicfzOzsVS8tS4rLD_gpgn31cPo';
+let sb = null;
+
+function initSupabase() {
+  try {
+    sb = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+    return true;
+  } catch(e) { console.error('Supabase init error:', e); return false; }
+}
+
+let authMode = 'login';
+function switchTab(mode) {
+  authMode = mode;
+  document.getElementById('tab-login').style.background = mode==='login' ? 'var(--mo)' : 'white';
+  document.getElementById('tab-login').style.color = mode==='login' ? 'white' : 'var(--su)';
+  document.getElementById('tab-register').style.background = mode==='register' ? 'var(--mo)' : 'white';
+  document.getElementById('tab-register').style.color = mode==='register' ? 'white' : 'var(--su)';
+  document.getElementById('auth-nombre-wrap').style.display = mode==='register' ? 'block' : 'none';
+  document.getElementById('auth-btn').textContent = mode==='register' ? 'Crear mi cuenta' : 'Entrar';
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+async function doAuth() {
+  if(!sb) { showAuthError('Error de conexión. Intenta recargar.'); return; }
+  const email = document.getElementById('auth-email').value.trim();
+  const pass = document.getElementById('auth-pass').value;
+  if(!email || !pass) { showAuthError('Completa tu correo y contraseña.'); return; }
+  const btn = document.getElementById('auth-btn');
+  btn.textContent = '...'; btn.disabled = true;
+
+  try {
+    let result;
+    if(authMode === 'register') {
+      const nombre = document.getElementById('auth-nombre').value.trim();
+      result = await sb.auth.signUp({ email, password: pass });
+      if(result.error) throw result.error;
+      if(nombre) A.nombre = nombre;
+    } else {
+      result = await sb.auth.signInWithPassword({ email, password: pass });
+      if(result.error) throw result.error;
+    }
+    await cargarDesdeSupabase();
+    show('s-welcome');
+  } catch(e) {
+    const msgs = {
+      'Invalid login credentials': 'Correo o contraseña incorrectos.',
+      'User already registered': 'Ya tienes cuenta. Usa "Entrar".',
+      'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres.',
+      'Unable to validate email address: invalid format': 'El formato del correo no es válido.'
+    };
+    showAuthError(msgs[e.message] || e.message);
+    btn.textContent = authMode==='register' ? 'Crear mi cuenta' : 'Entrar';
+    btn.disabled = false;
+  }
+}
+
+async function doMagicLink() {
+  if(!sb) return;
+  const email = document.getElementById('auth-email').value.trim();
+  if(!email) { showAuthError('Escribe tu correo primero.'); return; }
+  await sb.auth.signInWithOtp({ email });
+  show('s-magic');
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+async function guardarEnSupabase() {
+  if(!sb) { guardarLocal(); return; }
+  const { data: { user } } = await sb.auth.getUser();
+  if(!user) { guardarLocal(); return; }
+  try {
+    await sb.from('fichas').upsert({
+      email: user.email,
+      data: { nombre: A.nombre, foto: A.foto, resp: A.resp },
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'email' });
+    guardarLocal(); // backup local
+  } catch(e) { console.error('Error guardando:', e); guardarLocal(); }
+}
+
+async function cargarDesdeSupabase() {
+  if(!sb) return;
+  const { data: { user } } = await sb.auth.getUser();
+  if(!user) return;
+  try {
+    const { data } = await sb.from('fichas').select('data').eq('email', user.email).single();
+    if(data?.data) {
+      A.nombre = data.data.nombre || '';
+      A.foto = data.data.foto || null;
+      A.resp = data.data.resp || {};
+    }
+  } catch(e) { cargarLocal(); }
+}
+
+async function cerrarSesion() {
+  if(sb) await sb.auth.signOut();
+  A.nombre = ''; A.foto = null; A.resp = {};
+  localStorage.removeItem('fenix_data');
+  show('s-auth');
+}
+
+// PERSISTENCIA LOCAL
+
+function guardarLocal(){try{localStorage.setItem('fenix_data',JSON.stringify({nombre:A.nombre,foto:A.foto,resp:A.resp}));}catch(e){}}
+function cargarLocal(){try{const d=localStorage.getItem('fenix_data');if(d){const p=JSON.parse(d);A.nombre=p.nombre||'';A.foto=p.foto||null;A.resp=p.resp||{};return !!A.nombre;}}catch(e){}return false;}
+function limpiarSesion(){localStorage.removeItem('fenix_data');location.reload();}
+
+const A={nombre:'',foto:null,resp:{}};
+let modActivo=null,pasoIdx=0;
+
+window.addEventListener('DOMContentLoaded',function(){
+  initSupabase();
+  // Check if already logged in
+  if(sb) {
+    sb.auth.getSession().then(function(result) {
+      if(result.data.session) {
+        cargarDesdeSupabase().then(function() {
+          show('s-welcome');
+        });
+      }
+    });
+  }
+  // Supabase auth state listener
+  if(sb) {
+    sb.auth.onAuthStateChange(function(event, session) {
+      if(event === 'SIGNED_IN' && session) {
+        cargarDesdeSupabase().then(function() { show('s-welcome'); });
+      }
+    });
+  }
+  if(cargarLocal()&&A.nombre){
+    if(A.foto){var img=document.getElementById('prev-foto');img.src=A.foto;img.style.display='block';document.getElementById('foto-ph').style.display='none';}
+    document.getElementById('inp-nombre').value=A.nombre;
+    var banner=document.createElement('div');
+    banner.style.cssText='background:#FFF8E0;border:1px solid #D4AC00;border-radius:10px;padding:10px 14px;font-size:12px;color:#9a7a00;margin:0 0 1rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap';
+    var btxt=document.createTextNode('Bienvenida de vuelta, ');
+    var bstrong=document.createElement('strong');bstrong.textContent=A.nombre;
+    var btxt2=document.createTextNode(' - tu progreso esta guardado.');
+    var bcont=document.createElement('button');
+    bcont.textContent='Continuar';
+    bcont.style.cssText='background:#4B168E;color:white;border:none;border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer;margin-left:auto';
+    bcont.onclick=function(){goMods();};
+    var breset=document.createElement('button');
+    breset.textContent='Empezar de nuevo';
+    breset.style.cssText='background:none;border:none;font-size:10px;color:#aaa;cursor:pointer';
+    breset.onclick=function(){limpiarSesion();};
+    banner.appendChild(btxt);banner.appendChild(bstrong);banner.appendChild(btxt2);
+    banner.appendChild(bcont);banner.appendChild(breset);
+    var cnt=document.querySelector('#s-welcome .cnt');
+    if(cnt&&cnt.firstChild){cnt.insertBefore(banner,cnt.firstChild);}
+  }
+});
+
+const MODS=[
+  {id:'base',nombre:'Mi Identidad Mujer Fénix',icono:'🌱',desc:'Quién eres hoy y quién eliges ser',pasos:[
+    {id:'pelicula',titulo:'La película de tu vida',desc:'Imagina que una cámara te siguió durante los últimos 30 días. Solo observó lo que hacías, lo que decías, cómo te tratabas.\n\nLa mujer que vio la cámara...',tipo:'mcheck',hint:'Marca todo lo que reconoces en tu último mes.',ops:['Postergaba cosas importantes','Se levantaba agotada','Ponía a todos primero','Se criticaba constantemente','Decía "no tengo tiempo"','Dejaba proyectos a medias','Se hablaba con dureza','Se exigía demasiado','Olvidaba descansar','Celebraba muy poco sus logros','Decía "el lunes empiezo"','Se comparaba con otras','Vivía en piloto automático','Sentía que cargaba todo sola']},
+    {id:'cargas',titulo:'Lo que ya no quieres cargar',desc:'Hay cosas que has cargado por mucho tiempo. Creencias, roles, formas de ser que alguna vez te protegieron... pero que hoy te pesan.\n\n¿Cuáles de estas reconoces?',tipo:'mcheck',hint:'Sé honesta. Reconocer el peso es el primer paso para soltarlo.',ops:['La culpa de pedir para mí','El miedo a decepcionar a otros','La creencia de que no soy suficiente','Necesitar aprobación para avanzar','El rol de ser la fuerte de siempre','La vergüenza de no tener todo resuelto','El perfeccionismo como escudo','La postergación de mis propios sueños','La voz que dice "quién soy yo para..."','La responsabilidad emocional de todos','El miedo a brillar demasiado','La comparación constante con otras mujeres']},
+    {id:'diferente',titulo:'Lo que quieres diferente',desc:'Imagina tu vida en un año. No todo es perfecto — pero algo cambió profundamente.\n\n¿Qué quieres que sea diferente?',tipo:'marea',areas:[
+      {key:'amor',label:'💗 En el amor y las relaciones',placeholder:'Ej: quiero una relación donde me sientan, quiero dejar de dar más de lo que recibo...'},
+      {key:'dinero',label:'💛 En el dinero y la prosperidad',placeholder:'Ej: quiero sentirme merecedora, quiero ganar sin culpa, quiero tener ahorros propios...'},
+      {key:'trabajo',label:'🔥 En lo que hago / a qué me dedico',placeholder:'Ej: quiero trabajar en algo que me llene, quiero emprender, quiero sentir que mi trabajo importa...'},
+      {key:'cuerpo_v',label:'🌸 En mi cuerpo y mi energía',placeholder:'Ej: quiero sentirme liviana, quiero tener energía, quiero verme al espejo con amor...'},
+      {key:'yo_m',label:'✨ En cómo me trato a mí misma',placeholder:'Ej: quiero hablarme mejor, quiero creerme capaz, quiero dejar de pedir permiso para existir...'}
+    ]},
+    {id:'personaje',titulo:'¿Quién ha conducido tu vida?',desc:'Si la mujer que observaste fuera un personaje... ¿cuál la describe mejor?',tipo:'arch',hint:'No es un juicio — es solo un nombre para reconocerla.',ops:[{i:'🛡️',l:'La sobreviviente'},{i:'🌸',l:'La complaciente'},{i:'💎',l:'La perfeccionista'},{i:'😮‍💨',l:'La agotada'},{i:'🌫️',l:'La invisible'},{i:'🎛️',l:'La controladora'}]},
+    {id:'manana',titulo:'Cómo amanece tu Mujer Fénix',desc:'En un año, esa mujer que eliges ser... ¿cómo comienza su día?',tipo:'radio',ops:['Respira profundo antes de levantarse','Se levanta con intención clara','Agradece en silencio antes de moverse','Tiene una rutina pequeña solo para ella']},
+    {id:'dificultad',titulo:'Cuando algo no resulta...',desc:'Esa Mujer Fénix que construyes... ¿cómo responde cuando algo sale mal?',tipo:'radio',ops:['Aprende y ajusta sin hacer drama','Da un paso pequeño y continúa','Pide ayuda sin culpa','Se toma un descanso y vuelve con más claridad']},
+    {id:'dialogo',titulo:'Cómo se habla a sí misma',desc:'Cuando comete un error, tu Mujer Fénix...',tipo:'radio',ops:['Se habla con compasión, como a una amiga','Se anima: "puedo con esto"','Respira antes de reaccionar','Se pregunta: ¿qué puedo aprender aquí?']},
+    {id:'nombre_f',titulo:'Nombra a tu Mujer Fénix',desc:'Esta mujer que estás construyendo... ¿cómo quieres llamarla?',tipo:'texto',placeholder:'Ej: La Poderosa, Andrea Fénix, La que vuela...'},
+    {id:'frase',titulo:'Su frase',desc:'¿Qué frase la representa completamente?',tipo:'texto',placeholder:'Ej: "Me elijo todos los días"'},
+    {id:'estandares',titulo:'Sus estándares',desc:'Completa estas frases para tu Mujer Fénix:',tipo:'mtexto',campos:[
+      {key:'siempre',label:'Ella siempre...',placeholder:'Ej: cumple las promesas que se hace a sí misma'},
+      {key:'nunca',label:'Ella ya no acepta...',placeholder:'Ej: hablar mal de sí misma'},
+      {key:'protege',label:'Ella protege...',placeholder:'Ej: su energía y su tiempo'}
+    ]},
+    {id:'compromiso',titulo:'Tu compromiso desde hoy',desc:'Tu identidad no se construye con grandes decisiones. Se construye con lo que haces cada día, con las pequeñas elecciones que le dicen al mundo — y a ti misma — quién eres.',tipo:'compromisos'}
+    ,{id:'foto_dia',titulo:'El Dia de la Foto',desc:'Ejercicio opcional, pero poderoso. Imagina que alguien te tomo una foto en un dia normal, en exactamente un ano mas. No es un dia especial. Y sin embargo... algo en esa foto se ve diferente.',tipo:'foto_intro'},
+    {id:'foto_hora',titulo:'Son las 7 de la mañana en la foto',desc:'Mira a esa mujer. ¿Cómo está empezando su día?',tipo:'foto_mix',
+      ops:['Se despertó antes que todos, en silencio','Se levantó sin alarma — su cuerpo ya sabe cuándo','Tuvo una rutina pequeña solo para ella antes de empezar','Se despertó con calma, sin apuro, sin culpa'],
+      libre:{key:'foto_manana_libre',label:'¿Qué más ves en esa mañana? (opcional)',placeholder:'Ej: Tiene su café en silencio antes de que despierten los demás, hace 10 minutos de respiración, escribe en su diario...'}},
+    {id:'foto_cuerpo',titulo:'Cómo se ve ella',desc:'Esa mujer en la foto... ¿cómo luce? No hablo de talla ni peso — hablo de presencia.',tipo:'foto_mix',
+      ops:['Se ve descansada — tiene brillo en los ojos','Se mueve segura, ocupa su espacio','Se viste con cuidado, como quien se respeta','Su cuerpo se ve cuidado, no perfecto — amado'],
+      libre:{key:'foto_cuerpo_libre',label:'¿Cómo se viste? ¿Cómo lleva su pelo, su estilo? (opcional)',placeholder:'Ej: Tiene su estilo propio, se pone lo que le gusta sin preguntar si "queda bien", usa colores que la alegran...'}},
+    {id:'foto_tarde',titulo:'Son las 3 de la tarde',desc:'El día está en pleno. ¿Dónde está esa mujer y qué está haciendo?',tipo:'foto_mix',
+      ops:['Está haciendo algo que le apasiona y le genera dinero','Está en una reunión donde habla, no solo escucha','Está sola, concentrada, en su elemento','Está con personas que la nutren y la inspiran'],
+      libre:{key:'foto_tarde_libre',label:'¿A qué se dedica en ese momento? (opcional)',placeholder:'Ej: Está en su consulta atendiendo clientas, en su oficina tomando decisiones, creando algo propio...'}},
+    {id:'foto_noche',titulo:'Al final del día',desc:'La foto termina aquí. ¿Cómo cierra su día esa mujer?',tipo:'foto_mix',
+      ops:['Se va a dormir sin culpa — hizo lo que pudo','Tiene un ritual de cierre: agradece, suelta, descansa','Habló con alguien que la quiere de verdad','Se miró al espejo antes de dormir y le gustó lo que vio'],
+      libre:{key:'foto_noche_libre',label:'¿Cómo se siente al cerrar ese día? (opcional)',placeholder:'Ej: Se siente liviana, orgullosa, en paz. Ya no se pregunta si fue suficiente — sabe que sí.'}},
+    {id:'foto_sentir',titulo:'Lo más importante de la foto',desc:'Más allá de lo que hace o cómo se ve... ¿cómo se SIENTE esa mujer por dentro?',tipo:'foto_sentir',
+      ops:['En paz consigo misma','Segura de su valor','Liviana — sin cargas que no le pertenecen','Merecedora de lo bueno que tiene','Presente — no en el pasado ni en el futuro','Orgullosa sin necesitar aprobación'],
+      libre:{key:'foto_sentir_libre',label:'¿Hay algo más que sientes en esa foto?',placeholder:'Ej: Se siente entera. Por primera vez en mucho tiempo, no le falta nada.'}}
+  ]},
+  {id:'energia',nombre:'Capa Energía',icono:'⚡',desc:'Cómo cuida y gestiona su vitalidad',pasos:[
+    {id:'e_actual',titulo:'Tu energía hoy',desc:'¿Cómo describes tu energía la mayoría de los días?',tipo:'radio',ops:['Agotada antes de empezar','Con altibajos que no entiendo','Bastante estable pero sin chispa','Dispersa, haciendo mil cosas a la vez']},
+    {id:'ladrones',titulo:'Los ladrones de energía',desc:'Tu Mujer Fénix sabe exactamente qué le roba la energía. ¿Cuáles reconoces?',tipo:'mcheck',hint:'Marca los que más te agotan.',ops:['Compararse con otras','Decir sí cuando quiero decir no','El perfeccionismo','Las pantallas antes de dormir','Comer sin consciencia','No descansar de verdad','Guardarme lo que siento','Preocuparme por lo que no controlo','No moverme físicamente','El desorden mental y físico']},
+    {id:'fuentes',titulo:'Lo que la recarga',desc:'¿Qué le da energía real a tu Mujer Fénix?',tipo:'tags',ops:[{i:'😴',l:'Dormir bien'},{i:'🚶‍♀️',l:'Moverse'},{i:'🌿',l:'Naturaleza'},{i:'🎵',l:'Música'},{i:'📚',l:'Aprender'},{i:'👯‍♀️',l:'Conexión real'},{i:'🧘‍♀️',l:'Silencio'},{i:'🎨',l:'Crear'}]},
+    {id:'hab_e',titulo:'Su hábito de energía',desc:'Un solo hábito para cuidar su energía todos los días, aunque sean 5 minutos.',tipo:'texto',placeholder:'Ej: Caminar 20 minutos en silencio, dormir 7 horas...'}
+  ]},
+  {id:'confianza',nombre:'Capa Confianza',icono:'💜',desc:'Cómo se habla, se mueve y se valora',pasos:[
+    {id:'voz',titulo:'La voz interior',desc:'Cuando te miras al espejo en la mañana, ¿qué piensas?',tipo:'radio',ops:['"Veo una mujer que está creciendo"','"Veo lo que quiero cambiar"','"Veo a alguien que merece cuidado"','"Prefiero no mirarme mucho"']},
+    {id:'lenguaje',titulo:'Su lenguaje corporal',desc:'Tu Mujer Fénix se mueve de cierta manera. ¿Qué la describe?',tipo:'mcheck',hint:'Elige lo que sientes que ya eres o quieres ser.',ops:['Camina erguida','Mira a los ojos','Respira lento','Sonríe con facilidad','Se mueve sin apuro','Ocupa el espacio que necesita','Habla con calma y claridad']},
+    {id:'limites',titulo:'Sus límites',desc:'Tu Mujer Fénix ya no acepta...',tipo:'mcheck',ops:['Excusas propias','Relaciones que la agotan','Críticas que no pidió','Postergarse indefinidamente','Hacerse pequeña para no incomodar','Pedir perdón por existir','Compararse para sentirse menos']},
+    {id:'promesa_c',titulo:'Una promesa de confianza',desc:'¿Cuál es la promesa más importante que tu Mujer Fénix se hace a sí misma?',tipo:'texto',placeholder:'Ej: Me voy a creer cuando digo que puedo...'}
+  ]},
+  {id:'cuerpo',nombre:'Capa Cuerpo',icono:'🌸',desc:'Cómo trata su cuerpo con amor',pasos:[
+    {id:'rel_c',titulo:'Tu relación con tu cuerpo',desc:'Honestamente, ¿cómo describirías la relación que tienes con tu cuerpo hoy?',tipo:'radio',ops:['De tolerancia — lo acepto pero no lo amo','De crítica — siempre encuentro algo que mejorar','De descuido — no lo cuido como merece','De comienzo — estoy aprendiendo a quererlo']},
+    {id:'amor_c',titulo:'Cómo lo trata con amor',desc:'Tu Mujer Fénix tiene una relación amorosa con su cuerpo. ¿Qué hace?',tipo:'mcheck',hint:'Elige lo que quieres que sea parte de tu vida.',ops:['Lo alimenta con consciencia','Lo mueve porque le da placer','Lo descansa sin culpa','Lo viste con cuidado','Lo escucha cuando pide parar','No lo compara con el de otras','Lo celebra como está hoy','Le habla con ternura']},
+    {id:'gesto_c',titulo:'Su gesto de amor diario',desc:'¿Qué pequeño gesto de amor hace tu Fénix por su cuerpo todos los días?',tipo:'texto',placeholder:'Ej: Cocinarme algo rico con tiempo, moverme 15 minutos...'}
+  ]},
+  {id:'disfrute',nombre:'Capa Disfrute',icono:'✨',desc:'Qué le da alegría y cómo descansa sin culpa',pasos:[
+    {id:'culpa_d',titulo:'El disfrute sin culpa',desc:'¿Cuándo fue la última vez que hiciste algo solo porque te daba placer, sin sentirte culpable?',tipo:'radio',ops:['Hace mucho, no recuerdo bien','La semana pasada','Casi nunca — siempre hay algo más importante','Ayer — estoy aprendiendo a disfrutar']},
+    {id:'hobbies',titulo:'Lo que la hace sentir viva',desc:'¿Qué de esto te llena de verdad?',tipo:'mcheck',hint:'Marca todo lo que sientes que te llena.',ops:['Bailar','Cocinar algo especial','Leer','Salir a caminar sin destino','Crear con las manos','Reírse con amigas','Ver películas o series','Cantar','Escribir','Viajar','Estar en silencio total','Aprender algo nuevo']},
+    {id:'act_p',titulo:'Tu actividad de disfrute',desc:'¿Hay algo que amas hacer y que llevas mucho tiempo sin hacer?',tipo:'texto',placeholder:'Esa cosa que cuando la haces sientes que eres completamente tú...'},
+    {id:'comp_d',titulo:'Su compromiso de alegría',desc:'¿Qué pequeño acto de disfrute incorpora tu Fénix esta semana?',tipo:'texto',placeholder:'Ej: 30 minutos de lectura los martes, bailar sola en la cocina...'}
+  ]}
+];
+
+document.getElementById('inp-foto').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{A.foto=ev.target.result;const img=document.getElementById('prev-foto');img.src=A.foto;img.style.display='block';document.getElementById('foto-ph').style.display='none';guardarEnSupabase();};
+  r.readAsDataURL(f);
+});
+
+function iniciar(){
+  const n=document.getElementById('inp-nombre').value.trim();
+  if(!n){document.getElementById('inp-nombre').focus();return;}
+  A.nombre=n;guardarEnSupabase();goMods();
+}
+
+function goMods(){
+  document.getElementById('h-nombre').textContent=A.nombre+' ✦';
+  const fm=document.getElementById('mod-foto');
+  if(A.foto)fm.innerHTML=`<img src="${A.foto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+  const comp=MODS.filter(m=>A.resp[m.id]).length;
+  document.getElementById('est-mods').textContent=comp===0?'Comenzando el viaje 🌱':comp===MODS.length?'¡Ficha completa! 🔥':`${comp} de ${MODS.length} capas completadas`;
+  const lista=document.getElementById('lista-mods');lista.innerHTML='';
+  MODS.forEach((m,i)=>{
+    const done=!!A.resp[m.id],locked=i>0&&!A.resp[MODS[i-1].id];
+    const d=document.createElement('div');
+    d.className=`mc${done?' dn':''}${locked?' lk':''}`;
+    d.innerHTML=`<div class="mi">${m.icono}</div><div class="mif"><h3>${m.nombre}</h3><p>${m.desc}</p></div><span class="mb ${done?'bd':locked?'bl':'bn'}">${done?'✓ Lista':locked?'Bloqueado':'Comenzar'}</span>`;
+    if(!locked)d.onclick=()=>iniciarMod(m.id);
+    lista.appendChild(d);
+  });
+  const bx=document.createElement('div');bx.style.marginTop='1rem';
+  if(comp>0)bx.innerHTML+=`<button class="btn bs" onclick="verFicha()" style="margin-top:0">✦ Ver mi Ficha Fénix</button>`;
+  if(A.resp['base'])bx.innerHTML+=`<button class="btn bp" onclick="generarCarta(${comp===MODS.length})" style="margin-top:.6rem">📬 Mi carta del Yo Futuro${comp===MODS.length?' (completa)':' (inicial)'}</button>`;
+  lista.appendChild(bx);
+  show('s-modulos');
+}
+
+function iniciarMod(id){
+  modActivo=MODS.find(m=>m.id===id);pasoIdx=0;
+  document.getElementById('ej-tit').textContent=modActivo.icono+' '+modActivo.nombre;
+  show('s-ejercicio');renderPaso();
+}
+
+function renderPaso(){
+  const p=modActivo.pasos[pasoIdx],tot=modActivo.pasos.length;
+  document.getElementById('ej-prog').style.width=(pasoIdx/tot*100)+'%';
+  const c=document.getElementById('ej-cnt');c.innerHTML='';c.scrollTop=0;
+  const rg=A.resp[modActivo.id]?.[p.id]||null;
+  const h=document.createElement('div');
+  h.innerHTML=`<div class="pn">Paso ${pasoIdx+1} de ${tot}</div><div class="pt">${p.titulo}</div><div class="pd">${(p.desc||'').replace(/\n/g,'<br>')}</div>`;
+  c.appendChild(h);
+  if(p.hint){const ht=document.createElement('div');ht.className='ht';ht.textContent=p.hint;c.appendChild(ht);}
+
+  if(p.tipo==='foto_intro'){
+    const blk=document.createElement('div');
+    const bd1=document.createElement('div');
+    bd1.style.cssText='background:var(--mo);border-radius:16px;padding:1.4rem;margin-bottom:1.2rem;text-align:center';
+    bd1.innerHTML='<div style="font-size:40px;margin-bottom:.8rem">📸</div><div style="font-family:Playfair Display,serif;color:var(--do);font-size:18px;margin-bottom:.6rem">Imagina la foto</div><div style="color:rgba(255,255,255,.85);font-size:13px;line-height:1.75">Cierra los ojos un momento.<br>Respira profundo.<br>Visualiza esa foto, un dia normal tuyo, en un año.<br><br>No lo que quieres lograr.<br>Lo que ya <em style=\'color:var(--do)\'>eres</em>.</div>';
+    const bd2=document.createElement('div');bd2.className='ht';
+    bd2.textContent='Este ejercicio no tiene respuestas correctas. Solo lo que ves cuando te imaginas siendo ella.';
+    blk.appendChild(bd1);blk.appendChild(bd2);
+    c.appendChild(blk);
+
+  } else if(p.tipo==='foto_mix'||p.tipo==='foto_sentir'){
+    const rg2=A.resp[modActivo.id]?.[p.id]||{sel:[],libre:''};
+    const sel=rg2.sel||[];
+    const grid=document.createElement('div');
+    grid.className='cks';grid.style.marginBottom='1.2rem';
+    p.ops.forEach(function(op){
+      const item=document.createElement('div');
+      item.className='ck'+(sel.includes(op)?' sl':'');
+      item.innerHTML='<div class="cb">'+(sel.includes(op)?'✓':'')+'</div><span>'+op+'</span>';
+      item.onclick=function(){item.classList.toggle('sl');item.querySelector('.cb').textContent=item.classList.contains('sl')?'✓':'';};
+      grid.appendChild(item);
+    });
+    const campoDiv=document.createElement('div');campoDiv.className='cm';
+    const lbl=document.createElement('label');lbl.textContent=p.libre.label;
+    const ta=document.createElement('textarea');
+    ta.id='f-'+p.libre.key;ta.rows=2;ta.placeholder=p.libre.placeholder;
+    ta.style.minHeight='60px';ta.value=rg2.libre||'';
+    campoDiv.appendChild(lbl);campoDiv.appendChild(ta);
+    const blk=document.createElement('div');
+    blk.appendChild(grid);blk.appendChild(campoDiv);
+    c.appendChild(blk);
+
+  } else if(p.tipo==='compromisos'){
+    const rg2=A.resp[modActivo.id]?.[p.id]||{};
+    const blk=document.createElement('div');
+
+    // Seccion habito nuevo
+    const s1=document.createElement('div');s1.style.marginBottom='1.4rem';
+    const t1=document.createElement('div');t1.style.cssText='font-size:13px;font-weight:500;color:var(--tx);margin-bottom:6px';
+    t1.innerHTML='🌱 1 acción o hábito que <em>incorporas</em> desde hoy';
+    const h1=document.createElement('div');h1.className='ht';h1.style.marginBottom='8px';
+    h1.textContent='Ej: Escribir 3 cosas que logré antes de dormir · Caminar 15 minutos sola · Decirme "lo hice bien" al terminar algo · Leer 10 minutos antes del celular';
+    const ta1=document.createElement('textarea');ta1.id='f-habito-nuevo';ta1.rows=2;
+    ta1.placeholder='Escribe tu hábito o acción...';
+    ta1.style.cssText='width:100%;padding:11px 13px;border:1.5px solid var(--lv);border-radius:10px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;resize:none';
+    ta1.value=rg2.nuevo||'';
+    s1.appendChild(t1);s1.appendChild(h1);s1.appendChild(ta1);
+
+    // Seccion habito viejo
+    const s2=document.createElement('div');s2.style.marginBottom='1.4rem';
+    const t2=document.createElement('div');t2.style.cssText='font-size:13px;font-weight:500;color:var(--tx);margin-bottom:6px';
+    t2.innerHTML='🍂 1 acción o hábito que <em>dejas atrás</em>';
+    const h2=document.createElement('div');h2.className='ht';h2.style.marginBottom='8px';
+    h2.textContent='Ej: Revisar el teléfono antes de levantarme · Criticarme frente al espejo · Comer de pie apurada · Decir sí cuando quiero decir no · Dormirme viendo redes sociales';
+    const ta2=document.createElement('textarea');ta2.id='f-habito-viejo';ta2.rows=2;
+    ta2.placeholder='Escribe lo que dejas ir...';
+    ta2.style.cssText='width:100%;padding:11px 13px;border:1.5px solid var(--lv);border-radius:10px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;resize:none';
+    ta2.value=rg2.viejo||'';
+    s2.appendChild(t2);s2.appendChild(h2);s2.appendChild(ta2);
+
+    // Caja compasion
+    const s3=document.createElement('div');
+    s3.style.cssText='background:var(--mo);border-radius:14px;padding:1.2rem 1.3rem;margin-top:.5rem';
+    const ct=document.createElement('div');
+    ct.style.cssText='font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--do);margin-bottom:8px;font-weight:500';
+    ct.textContent='Cuando no lo logres...';
+    const cp=document.createElement('div');
+    cp.style.cssText='font-size:13px;color:white;line-height:1.75';
+    cp.innerHTML='No rompiste tu identidad. Solo tuviste un día humano.<br><br>Las mujeres que se transforman no son las que nunca fallan — son las que vuelven sin castigarse.<br><br><em style="color:var(--do)">Ej: "Hoy no lo hice, y está bien. Mañana elijo de nuevo." · "Soy nueva en esto — me doy el tiempo que necesito." · "Un paso atrás no borra todos los pasos que ya di."</em>';
+    s3.appendChild(ct);s3.appendChild(cp);
+
+    blk.appendChild(s1);blk.appendChild(s2);blk.appendChild(s3);
+    c.appendChild(blk);
+
+  } else   guardarEnSupabase();
+  if(esFin)finMod();else{pasoIdx++;renderPaso();}
+}
+
+function finMod(){
+  show('s-ficha');
+  const c=document.getElementById('ficha-cnt');c.innerHTML='';
+  const rb=A.resp['base']||{},nf=rb.nombre_f||A.nombre;
+  const fh=A.foto?`<img src="${A.foto}" class="ffo">`:`<div class="ffo">🔥</div>`;
+  const card=document.createElement('div');card.className='fcd';
+  card.innerHTML=`<div class="fhd">${fh}<div><div class="fnm">${nf}</div><div class="faq">${rb.personaje||'Mujer Fénix 40+'}</div><span class="fmb">${modActivo.icono} ${modActivo.nombre} completada</span></div></div><div class="fbd" id="fb-d"></div>`;
+  c.appendChild(card);
+  const bd=document.getElementById('fb-d');
+  if(rb.frase)bd.innerHTML+=`<div class="fsc"><h4>Su frase</h4><div class="fb">${rb.frase}</div></div>`;
+  const nb=document.createElement('div');nb.className='nb';
+  nb.innerHTML=`<div class="nt">📖 Su día a día</div><div class="ld" id="nl"><div class="ds"><span></span><span></span><span></span></div><span>Escribiendo tu narrativa...</span></div><div class="ntx" id="nt-txt" style="display:none"></div>`;
+  bd.appendChild(nb);
+  generarNarr(nf);
+  c.innerHTML+=`<button class="btn bp" onclick="goMods()" style="margin-top:1rem">← Volver a mis módulos</button><button class="btn bs" onclick="generarCarta(false)">📬 Ver mi carta del Yo Futuro</button>'; if(A.resp['base']?.foto_hora)c.innerHTML+='<button class="btn bs" onclick="generarTarjetaVisualizacion()" style="margin-top:.5rem">📸 Mi Día de la Foto (imprimible)</button>'; c.innerHTML+='<div class="ftr">Academia Mujer Fénix 40+</div>`;
+}
+
+async function generarNarr(nf){
+  const rb=A.resp['base']||{},r=A.resp[modActivo?.id]||{};
+  let d=`Nombre Fénix: ${nf}\n`;
+  if(rb.frase)d+=`Frase: "${rb.frase}"\n`;
+  if(rb.estandares)d+=`Estándares: siempre ${rb.estandares.siempre}, ya no acepta ${rb.estandares.nunca}, protege ${rb.estandares.protege}\n`;
+  if(rb.cargas?.length)d+=`Lo que ya no carga: ${rb.cargas.join(', ')}\n`;
+  if(rb.diferente){const dif=rb.diferente;Object.entries(dif).forEach(([k,v])=>{if(v)d+=`Quiere diferente: ${v}\n`;});}
+  if(r.fuentes)d+=`La recargan: ${r.fuentes.join(', ')}\n`;
+  if(r.hab_e)d+=`Hábito energía: ${r.hab_e}\n`;
+  if(r.lenguaje)d+=`Lenguaje corporal: ${r.lenguaje.join(', ')}\n`;
+  if(r.promesa_c)d+=`Promesa de confianza: ${r.promesa_c}\n`;
+  if(r.amor_c)d+=`Trata su cuerpo: ${r.amor_c.join(', ')}\n`;
+  if(r.gesto_c)d+=`Gesto diario: ${r.gesto_c}\n`;
+  if(r.hobbies)d+=`Lo que la alegra: ${r.hobbies.join(', ')}\n`;
+  if(r.act_p)d+=`Actividad propia: ${r.act_p}\n`;
+  if(r.comp_d)d+=`Compromiso alegría: ${r.comp_d}\n`;
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:`Eres coach de transformación de identidad para mujeres de 40+. Calido, directo, poetico sin cursileria. Sin asteriscos ni markdown. Solo párrafos cortos. Segunda persona (tú). Español. Máximo 4 párrafos.`,messages:[{role:"user",content:`Escribe el relato del día a día de ${nf} con esta información:\n${d}\nMódulo actual: ${modActivo?.nombre||'Base'}. Concreto, inspirador, que ella pueda reconocerse.`}]})});
+    const data=await res.json();const txt=data.content?.[0]?.text||'';
+    document.getElementById('nl').style.display='none';const nt=document.getElementById('nt-txt');nt.style.display='block';nt.textContent=txt;
+  }catch(e){
+    document.getElementById('nl').style.display='none';const nt=document.getElementById('nt-txt');nt.style.display='block';nt.textContent='Cada respuesta que diste hoy es un voto por la mujer que estás construyendo.';
+  }
+}
+
+function verFicha(){
+  show('s-ficha');
+  const c=document.getElementById('ficha-cnt');
+  const rb=A.resp['base']||{},nf=rb.nombre_f||A.nombre;
+  const caps=MODS.filter(m=>A.resp[m.id]);
+  const fh=A.foto?`<img src="${A.foto}" class="ffo">`:`<div class="ffo">🔥</div>`;
+  c.innerHTML=`
+    <div class="fcd">
+      <div class="fhd">${fh}<div><div class="fnm">${nf}</div><div class="faq">${rb.personaje||'Mujer Fénix 40+'}</div><span class="fmb">${caps.length} capa${caps.length!==1?'s':''} completada${caps.length!==1?'s':''}</span></div></div>
+      <div class="fbd">
+        ${rb.frase?`<div class="fsc"><h4>Su frase</h4><div class="fb">${rb.frase}</div></div>`:''}
+        ${rb.estandares?`<div class="fsc"><h4>Sus estándares</h4><div class="fts">${rb.estandares.siempre?`<span class="ft">✓ ${rb.estandares.siempre}</span>`:''}${rb.estandares.nunca?`<span class="ft">✗ ${rb.estandares.nunca}</span>`:''}${rb.estandares.protege?`<span class="ft">🛡 ${rb.estandares.protege}</span>`:''}</div></div>`:''}
+        ${rb.cargas?.length?`<div class="fsc"><h4>Lo que ya soltó</h4><div class="fts">${rb.cargas.map(x=>`<span class="ft">${x}</span>`).join('')}</div></div>`:''}
+        ${rb.diferente?`<div class="fsc"><h4>Lo que quiere diferente</h4><div class="fts">${Object.entries(rb.diferente).filter(([k,v])=>v).map(([k,v])=>`<span class="ft">${v}</span>`).join('')}</div></div>`:''}
+        <div class="fsc"><h4>Capas de su identidad</h4><div class="cps">${MODS.map(m=>`<div class="cpr"><div class="cd ${A.resp[m.id]?'on':'off'}"></div><span>${m.icono} ${m.nombre} ${A.resp[m.id]?'✓':'— pendiente'}</span></div>`).join('')}</div></div>
+        <div id="narr-full"></div>
+      </div>
+    </div>
+    <button class="btn bp" onclick="generarCarta(${caps.length===MODS.length})" style="margin-top:0">📬 Mi carta del Yo Futuro</button>${A.resp["base"]?.foto_hora?"<button class=\"btn bs\" onclick=\"generarTarjetaVisualizacion()\" style=\"margin-top:.5rem\">📸 Mi Día de la Foto (imprimible)</button>":""}
+    <button class="btn bs" onclick="goMods()">← Volver a módulos</button>
+    <div class="ftr">Academia Mujer Fénix 40+</div>`;
+  const nbox=document.getElementById('narr-full');
+  nbox.innerHTML=`<div class="nb"><div class="nt">🔥 La mujer que estás construyendo</div><div class="ld" id="nl2"><div class="ds"><span></span><span></span><span></span></div><span>Generando narrativa completa...</span></div><div class="ntx" id="nt2" style="display:none"></div></div>`;
+  generarNarrFull(nf,caps);
+}
+
+async function generarNarrFull(nf,caps){
+  let d=`Nombre: ${nf}\n`;
+  const rb=A.resp['base']||{};
+  if(rb.frase)d+=`Frase: "${rb.frase}"\n`;
+  if(rb.cargas)d+=`Lo que ya no carga: ${rb.cargas.join(', ')}\n`;
+  if(rb.diferente)Object.entries(rb.diferente).forEach(([k,v])=>{if(v)d+=`Quiere diferente: ${v}\n`;});
+  caps.forEach(m=>{const r=A.resp[m.id];d+=`\nCapa ${m.nombre}:\n`;Object.entries(r).forEach(([k,v])=>{if(Array.isArray(v)&&v.length)d+=`- ${v.join(', ')}\n`;else if(typeof v==='object')Object.entries(v).forEach(([kk,vv])=>{if(vv)d+=`- ${vv}\n`;});else if(v)d+=`- ${v}\n`;});});
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,system:`Coach de transformación de identidad para mujeres de 40+. Calido, directo, poetico sin cursileria. Sin markdown. Párrafos cortos. Segunda persona. Español. Máx 5 párrafos.`,messages:[{role:"user",content:`Narrativa integrada del día a día de ${nf} con todas sus capas:\n${d}`}]})});
+    const data=await res.json();const txt=data.content?.[0]?.text||'';
+    document.getElementById('nl2').style.display='none';const nt=document.getElementById('nt2');nt.style.display='block';nt.textContent=txt;
+  }catch(e){document.getElementById('nl2').style.display='none';document.getElementById('nt2').style.display='block';document.getElementById('nt2').textContent='Tu historia se escribe con cada paso que das.';}
+}
+
+async function generarCarta(completa){
+  show('s-carta');
+  const c=document.getElementById('carta-cnt');
+  const rb=A.resp['base']||{},nf=rb.nombre_f||A.nombre;
+  c.innerHTML=`<div style="text-align:center;padding:1rem 0 1.5rem"><div style="font-size:36px;margin-bottom:.5rem">💌</div><div style="font-family:'Playfair Display',serif;color:var(--mo);font-size:18px">Tu carta está llegando...</div><div style="font-size:12px;color:var(--su);margin-top:4px">${completa?'Carta completa con todas tus capas':'Carta inicial — se irá enriqueciendo'}</div></div><div class="ld" style="justify-content:center;margin-bottom:1.5rem" id="c-ld"><div class="ds"><span></span><span></span><span></span></div><span>Escribiendo desde tu yo futuro...</span></div><div id="c-res" style="display:none"></div>`;
+  let d='Nombre real: '+A.nombre+'\nNombre Fénix: '+nf+'\n';
+  if(rb.frase)d+='Su frase: '+rb.frase+'\n';
+  if(rb.personaje)d+='Personaje que era: '+rb.personaje+'\n';
+  if(rb.cargas?.length)d+='Lo que dejó ir: '+rb.cargas.join(', ')+'\n';
+  if(rb.diferente){const dif=rb.diferente;if(dif.amor)d+='Quería diferente en amor: '+dif.amor+'\n';if(dif.dinero)d+='Quería diferente en dinero: '+dif.dinero+'\n';if(dif.trabajo)d+='Quería diferente en trabajo: '+dif.trabajo+'\n';if(dif.cuerpo_v)d+='Quería diferente en cuerpo: '+dif.cuerpo_v+'\n';if(dif.yo_m)d+='Quería diferente en sí misma: '+dif.yo_m+'\n';}
+  if(rb.estandares)d+='Sus nuevos estándares: siempre '+rb.estandares.siempre+', ya no acepta '+rb.estandares.nunca+'\n';
+  if(rb.manana)d+='Cómo amanece: '+rb.manana+'\n';
+  if(rb.dificultad)d+='Ante dificultades: '+rb.dificultad+'\n';
+  const caps=MODS.filter(m=>A.resp[m.id]&&m.id!=='base');
+  caps.forEach(m=>{const r=A.resp[m.id];d+='\nCapa '+m.nombre+':\n';Object.entries(r).forEach(([k,v])=>{if(Array.isArray(v)&&v.length)d+='- '+v.join(', ')+'\n';else if(typeof v==='object'&&v)Object.entries(v).forEach(([kk,vv])=>{if(vv)d+='- '+vv+'\n';});else if(v)d+='- '+v+'\n';});});
+  const tipo=completa?'completa con todos los logros de las 5 capas':'inicial después del primer ejercicio de identidad';
+  const systemPrompt='Escribes cartas profundamente transformadoras del YO FUTURO al YO PRESENTE para mujeres de 40+. Intimo, calido, que toca el alma. Como si fuera la misma mujer escribiendose desde el futuro. Habla de lo que ya logro, como se siente ahora, que cambio en su vida concreta (amor, dinero, cuerpo, trabajo, como se trata). Le dice a su yo presente con compasion y certeza. Sin asteriscos ni markdown. Empieza con Querida '+A.nombre+', y termina con la firma '+nf+'. Español con tildes y eñes correctas. Maximo 6 parrafos emotivos y concretos. Que la mujer quiera editarla y hacerla suya.';
+  const userPrompt='Escribe la carta '+tipo+' para '+A.nombre+' (su identidad Fenix es '+nf+'). Usa toda esta informacion para hacerla concreta y personal:\n\n'+d;
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1500,system:systemPrompt,messages:[{role:"user",content:userPrompt}]})});
+    if(!res.ok){const err=await res.text();throw new Error('API error: '+res.status+' '+err);}
+    const data=await res.json();
+    const txt=data.content?.[0]?.text||'';
+    if(!txt)throw new Error('Respuesta vacía');
+    document.getElementById('c-ld').style.display='none';
+    const cr=document.getElementById('c-res');cr.style.display='block';
+    cr.innerHTML='<div class="ctb"><div class="cth"><div class="ctd">Desde: '+nf+' — un año después</div><div class="ctt">Para: '+A.nombre+', hoy</div></div><div class="sep"></div><div class="ctx" id="carta-cuerpo" contenteditable="true"></div><div class="ctf">Con amor y certeza,<br>'+nf+' ✦</div></div><div class="ceh">✏️ Toca el texto para editarlo y hacerlo completamente tuyo</div><button class="btn bs" onclick="copiarCarta()" style="margin-top:.5rem">Copiar mi carta</button><button class="btn bp" onclick="goMods()">← Volver a módulos</button><div class="ftr">Academia Mujer Fénix 40+</div>';
+    document.getElementById('carta-cuerpo').textContent=txt;
+  }catch(e){
+    console.error('Error carta:',e);
+    document.getElementById('c-ld').style.display='none';
+    document.getElementById('c-res').style.display='block';
+    document.getElementById('c-res').innerHTML='<p style="color:var(--su);font-size:13px;text-align:center;margin:1rem 0">Hubo un error al generar la carta.<br><small style="opacity:.7">'+e.message+'</small></p><button class="btn bp" onclick="generarCarta('+completa+')">Reintentar</button>';
+  }
+}
+
+function copiarCarta(){
+  const txt=document.getElementById('carta-cuerpo')?.textContent||'';
+  navigator.clipboard.writeText(txt).then(()=>alert('¡Carta copiada! Pégala donde quieras guardarla 💜')).catch(()=>alert('Selecciona el texto manualmente para copiarlo'));
+}
+
+// TARJETA DE VISUALIZACIÓN
+async function generarTarjetaVisualizacion(){
+  show('s-tarjeta');
+  const c=document.getElementById('tarjeta-cnt');
+  const rb=A.resp['base']||{};
+  const nf=rb.nombre_f||A.nombre;
+  const manana=rb.foto_hora;
+  const cuerpo=rb.foto_cuerpo;
+  const tarde=rb.foto_tarde;
+  const noche=rb.foto_noche;
+  const sentir=rb.foto_sentir;
+
+  c.innerHTML='';
+  const hd=document.createElement('div');
+  hd.style.cssText='text-align:center;padding:1rem 0 1.5rem';
+  hd.innerHTML='<div style="font-size:40px;margin-bottom:.5rem">📸</div><div style="font-family:Playfair Display,serif;color:var(--mo);font-size:20px;margin-bottom:.4rem">Mi Día de la Foto</div><div style="font-size:12px;color:var(--su)">'+nf+' · en un año</div>';
+  c.appendChild(hd);
+
+  const nb=document.createElement('div');nb.className='nb';
+  const ntt=document.createElement('div');ntt.className='nt';ntt.textContent='✨ Tu día en primera persona';
+  const ld=document.createElement('div');ld.className='ld';ld.id='tl';
+  ld.innerHTML='<div class="ds"><span></span><span></span><span></span></div><span>Escribiendo tu visualización...</span>';
+  const tx=document.createElement('div');tx.className='ntx';tx.id='tt';tx.style.display='none';
+  nb.appendChild(ntt);nb.appendChild(ld);nb.appendChild(tx);
+  c.appendChild(nb);
+
+  if(rb.frase){
+    const fr=document.createElement('div');fr.className='fb';fr.style.marginTop='1rem';
+    fr.textContent=rb.frase;c.appendChild(fr);
+  }
+
+  const btnP=document.createElement('button');btnP.className='btn bp';btnP.style.marginTop='1rem';
+  btnP.textContent='🖨️ Imprimir o guardar como PDF';btnP.id='btn-imp';btnP.style.display='none';
+  btnP.onclick=function(){window.print();};
+  const btnV=document.createElement('button');btnV.className='btn bs';
+  btnV.textContent='← Volver';btnV.onclick=function(){goMods();};
+  c.appendChild(btnP);c.appendChild(btnV);
+  c.innerHTML+='<div class="ftr">Academia Mujer Fénix 40+</div>';
+
+  let d='';
+  d+='Nombre Fenix: '+nf+'\n';
+  if(manana&&manana.sel&&manana.sel.length)d+='Sus mananas: '+manana.sel.join(', ')+'\n';
+  if(manana&&manana.libre)d+='Detalle manana: '+manana.libre+'\n';
+  if(cuerpo&&cuerpo.sel&&cuerpo.sel.length)d+='Como se ve: '+cuerpo.sel.join(', ')+'\n';
+  if(cuerpo&&cuerpo.libre)d+='Estilo: '+cuerpo.libre+'\n';
+  if(tarde&&tarde.sel&&tarde.sel.length)d+='A las 3pm: '+tarde.sel.join(', ')+'\n';
+  if(tarde&&tarde.libre)d+='Su trabajo: '+tarde.libre+'\n';
+  if(noche&&noche.sel&&noche.sel.length)d+='Al final del dia: '+noche.sel.join(', ')+'\n';
+  if(noche&&noche.libre)d+='Como se siente al cerrar: '+noche.libre+'\n';
+  if(sentir&&sentir.sel&&sentir.sel.length)d+='Se siente: '+sentir.sel.join(', ')+'\n';
+  if(sentir&&sentir.libre)d+='Sensacion profunda: '+sentir.libre+'\n';
+  if(rb.frase)d+='Su frase: '+rb.frase+'\n';
+
+  const sysP='Escribes tarjetas de visualizacion poderosas para mujeres de 40+ en transformacion. En primera persona singular, tiempo presente, como si ya estuviera viviendo ese dia. Calido, sensorial, concreto. Sin asteriscos ni markdown. 4-5 parrafos cortos. Comienza con Hoy es un martes cualquiera de mi vida. Y sin embargo... Termina con la frase de identidad si la tienes. Espanol con tildes.';
+  const usrP='Escribe la tarjeta de visualizacion del dia de la foto para '+nf+'. Primera persona presente:
+
+'+d;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1200,system:sysP,messages:[{role:'user',content:usrP}]})});
+    if(!res.ok)throw new Error('Error '+res.status);
+    const data=await res.json();
+    const txt=data.content&&data.content[0]?data.content[0].text:'';
+    document.getElementById('tl').style.display='none';
+    const ttEl=document.getElementById('tt');ttEl.style.display='block';ttEl.textContent=txt;
+    document.getElementById('btn-imp').style.display='block';
+  }catch(e){
+    const ldEl=document.getElementById('tl');
+    if(ldEl)ldEl.innerHTML='<span style="color:#c00">Error al generar. Asegurate de estar en el servidor web.</span>';
+  }
+}
+
+
