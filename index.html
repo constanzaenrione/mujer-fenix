@@ -105,6 +105,41 @@ body{font-family:'DM Sans',sans-serif;background:var(--fo);color:var(--tx);min-h
 </head>
 <body>
 
+<!-- AUTH -->
+<div class="screen" id="s-auth">
+  <div class="hdr"><div><h1>Identidad Mujer Fénix ✦</h1><div class="sub">Academia Mujer Fénix 40+</div></div></div>
+  <div class="cnt">
+    <div class="hero">
+      <span class="hi">🔥</span>
+      <h2>Bienvenida</h2>
+      <p>Entra con tu correo para guardar tu progreso y acceder desde cualquier dispositivo.</p>
+    </div>
+    <div style="display:flex;margin:1.5rem 0 1rem;border-radius:10px;overflow:hidden;border:1.5px solid var(--lv)">
+      <button id="tab-login" onclick="switchTab('login')" style="flex:1;padding:10px;background:var(--mo);color:white;border:none;font-family:DM Sans,sans-serif;font-size:13px;font-weight:500;cursor:pointer">Entrar</button>
+      <button id="tab-register" onclick="switchTab('register')" style="flex:1;padding:10px;background:white;color:var(--su);border:none;font-family:DM Sans,sans-serif;font-size:13px;cursor:pointer">Crear cuenta</button>
+    </div>
+    <div class="cm"><label>Tu correo</label><input type="email" id="auth-email" placeholder="correo@ejemplo.com"></div>
+    <div class="cm"><label>Contraseña</label><input type="password" id="auth-pass" placeholder="••••••••"></div>
+    <div class="cm" id="auth-nombre-wrap" style="display:none"><label>Tu nombre</label><input type="text" id="auth-nombre" placeholder="¿Cómo te llamas?"></div>
+    <div id="auth-error" style="display:none;background:#fff0f0;border:1px solid #ffcdd2;border-radius:9px;padding:9px 12px;font-size:12px;color:#c00;margin:.5rem 0"></div>
+    <button class="btn bp" id="auth-btn" onclick="doAuth()" style="margin-top:.5rem">Entrar</button>
+    <div style="text-align:center;margin-top:1rem">
+      <button onclick="doMagicLink()" style="background:none;border:none;color:var(--su);font-size:12px;cursor:pointer;text-decoration:underline">Olvidé mi contraseña</button>
+    </div>
+  </div>
+  <div class="ftr">Academia Mujer Fénix 40+</div>
+</div>
+
+<div class="screen" id="s-magic">
+  <div class="hdr"><div><h1>Revisa tu correo ✦</h1></div></div>
+  <div class="cnt" style="text-align:center;padding-top:3rem">
+    <div style="font-size:52px;margin-bottom:1rem">📬</div>
+    <div style="font-family:Playfair Display,serif;color:var(--mo);font-size:20px;margin-bottom:.8rem">Enlace enviado</div>
+    <p style="color:var(--su);font-size:14px;line-height:1.65">Revisa tu correo y haz clic en el enlace para entrar.</p>
+    <button class="btn bs" onclick="show('s-auth')" style="margin-top:2rem">← Volver</button>
+  </div>
+</div>
+
 <div class="screen" id="s-welcome">
   <div class="hdr"><div><h1>Identidad Mujer Fénix ✦</h1><div class="sub">Academia Mujer Fénix 40+</div></div></div>
   <div class="cnt">
@@ -285,22 +320,27 @@ const A={nombre:'',foto:null,resp:{}};
 let modActivo=null,pasoIdx=0;
 
 window.addEventListener('DOMContentLoaded',function(){
-  initSupabase();
+  // Show auth screen immediately - don't wait for Supabase
+  show('s-auth');
+  
+  // Init Supabase in background
+  try {
+    initSupabase();
+  } catch(e) { console.warn('Supabase init failed:', e); }
+  
   // Check if already logged in
   if(sb) {
     sb.auth.getSession().then(function(result) {
-      if(result.data.session) {
+      if(result.data&&result.data.session) {
         cargarDesdeSupabase().then(function() {
           show('s-welcome');
         });
       }
-    });
-  }
-  // Supabase auth state listener
-  if(sb) {
+    }).catch(function(e){ console.warn('Session check failed:', e); });
+    
     sb.auth.onAuthStateChange(function(event, session) {
-      if(event === 'SIGNED_IN' && session) {
-        cargarDesdeSupabase().then(function() { show('s-welcome'); });
+      if(event==='SIGNED_IN'&&session) {
+        cargarDesdeSupabase().then(function(){ show('s-welcome'); });
       }
     });
   }
