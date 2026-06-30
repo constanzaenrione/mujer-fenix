@@ -98,10 +98,46 @@ body{font-family:'DM Sans',sans-serif;background:var(--fo);color:var(--tx);min-h
 .sep{height:1px;background:var(--lv);margin:1.2rem 0}
 .ftr{text-align:center;padding:1rem;font-size:10px;color:var(--su)}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
 
-<div class="screen active" id="s-welcome">
+
+<div class="screen active" id="s-auth">
+  <div class="hdr"><div><h1>Identidad Mujer Fénix ✦</h1><div class="sub">Academia Mujer Fénix 40+</div></div></div>
+  <div class="cnt">
+    <div class="hero">
+      <span class="hi">🔥</span>
+      <h2>Bienvenida</h2>
+      <p>Entra con tu correo para guardar tu progreso y acceder desde cualquier dispositivo.</p>
+    </div>
+    <div style="display:flex;margin:1.5rem 0 1rem;border-radius:10px;overflow:hidden;border:1.5px solid var(--lv)">
+      <button id="tab-in" onclick="setTab('in')" style="flex:1;padding:10px;background:var(--mo);color:white;border:none;font-family:DM Sans,sans-serif;font-size:13px;font-weight:500;cursor:pointer">Entrar</button>
+      <button id="tab-up" onclick="setTab('up')" style="flex:1;padding:10px;background:white;color:var(--su);border:none;font-family:DM Sans,sans-serif;font-size:13px;cursor:pointer">Crear cuenta</button>
+    </div>
+    <div class="cm"><label>Tu correo</label><input type="email" id="a-email" placeholder="correo@ejemplo.com"></div>
+    <div class="cm"><label>Contraseña</label><input type="password" id="a-pass" placeholder="Mínimo 6 caracteres"></div>
+    <div class="cm" id="a-nombre-wrap" style="display:none"><label>Tu nombre</label><input type="text" id="a-nombre" placeholder="¿Cómo te llamas?"></div>
+    <div id="a-err" style="display:none;background:#fff0f0;border:1px solid #ffcdd2;border-radius:9px;padding:9px 12px;font-size:12px;color:#c00;margin:.5rem 0"></div>
+    <button class="btn bp" id="a-btn" onclick="doAuth()" style="margin-top:.5rem">Entrar</button>
+    <div style="text-align:center;margin-top:1.2rem">
+      <button onclick="doMagic()" style="background:none;border:none;color:var(--su);font-size:12px;cursor:pointer;text-decoration:underline">¿Olvidaste tu contraseña? Recibir enlace por correo</button>
+    </div>
+  </div>
+  <div class="ftr">Academia Mujer Fénix 40+</div>
+</div>
+
+<div class="screen" id="s-magic">
+  <div class="hdr"><div><h1>Revisa tu correo ✦</h1></div></div>
+  <div class="cnt" style="text-align:center;padding-top:3rem">
+    <div style="font-size:52px;margin-bottom:1rem">📬</div>
+    <div style="font-family:Playfair Display,serif;color:var(--mo);font-size:20px;margin-bottom:.8rem">Enlace enviado</div>
+    <p style="color:var(--su);font-size:14px;line-height:1.65">Revisa tu correo y haz clic en el enlace para entrar sin contraseña.</p>
+    <button class="btn bs" onclick="show('s-auth')" style="margin-top:2rem">← Volver</button>
+  </div>
+</div>
+
+<div class="screen" id="s-welcome">
   <div class="hdr"><div><h1>Identidad Mujer Fénix ✦</h1><div class="sub">Academia Mujer Fénix 40+</div></div></div>
   <div class="cnt">
     <div class="hero">
@@ -135,7 +171,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--fo);color:var(--tx);min-h
 <div class="screen" id="s-modulos">
   <div class="hdr">
     <div style="flex:1"><h1 id="h-nombre">Mi Ficha Fénix</h1><div class="sub">Elige el módulo que estás trabajando</div></div>
-    <button onclick="limpiarSesion()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:10px;cursor:pointer">Salir</button>
+    <button onclick="cerrarSesion()" style="background:none;border:none;color:rgba(255,255,255,.5);font-size:10px;cursor:pointer">Salir</button>
   </div>
   <div class="cnt">
     <div style="text-align:center;margin-bottom:1.3rem">
@@ -256,7 +292,7 @@ document.getElementById('inp-foto').addEventListener('change', function(e) {
     var img = document.getElementById('prev-foto');
     img.src = A.foto; img.style.display = 'block';
     document.getElementById('foto-ph').style.display = 'none';
-    guardarLocal();
+    guardarSB();
   };
   r.readAsDataURL(f);
 });
@@ -266,7 +302,7 @@ function iniciar() {
   var n = document.getElementById('inp-nombre').value.trim();
   if (!n) { document.getElementById('inp-nombre').focus(); return; }
   A.nombre = n;
-  guardarLocal();
+  guardarSB();
   goMods();
 }
 
@@ -463,7 +499,7 @@ function guardar(esFin) {
     var n = document.getElementById('f-hab-nuevo'), v = document.getElementById('f-hab-viejo');
     A.resp[modActivo.id][p.id] = { nuevo: n ? n.value : '', viejo: v ? v.value : '' };
   }
-  guardarLocal();
+  guardarSB();
   if (esFin) finMod(); else { pasoIdx++; renderPaso(); }
 }
 
@@ -676,30 +712,151 @@ function show(id) {
 }
 
 // ── INICIO AL CARGAR ──
-(function() {
-  if (cargarLocal() && A.nombre) {
-    var inp = document.getElementById('inp-nombre');
-    if (inp) inp.value = A.nombre;
-    if (A.foto) {
-      var img = document.getElementById('prev-foto');
-      if (img) { img.src = A.foto; img.style.display = 'block'; }
-      var ph = document.getElementById('foto-ph');
-      if (ph) ph.style.display = 'none';
+
+
+// ── SUPABASE ──
+var SURL = 'https://zcovuvkqsmnedfnevmpm.supabase.co';
+var SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpjb3Z1dmtxc21uZWRmbmV2bXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4NDUyOTIsImV4cCI6MjA5ODQyMTI5Mn0.1VXulShYlMcTsqUgSicfzOzsVS8tS4rLD_gpgn31cPo';
+var sb = null;
+var authMode = 'in';
+
+function initSB() {
+  try { sb = window.supabase.createClient(SURL, SKEY); return true; } catch(e) { return false; }
+}
+
+function setTab(mode) {
+  authMode = mode;
+  document.getElementById('tab-in').style.background = mode === 'in' ? 'var(--mo)' : 'white';
+  document.getElementById('tab-in').style.color = mode === 'in' ? 'white' : 'var(--su)';
+  document.getElementById('tab-up').style.background = mode === 'up' ? 'var(--mo)' : 'white';
+  document.getElementById('tab-up').style.color = mode === 'up' ? 'white' : 'var(--su)';
+  document.getElementById('a-nombre-wrap').style.display = mode === 'up' ? 'block' : 'none';
+  document.getElementById('a-btn').textContent = mode === 'up' ? 'Crear mi cuenta' : 'Entrar';
+  document.getElementById('a-err').style.display = 'none';
+}
+
+async function doAuth() {
+  if (!sb) { showErr('Sin conexión. Recarga la página.'); return; }
+  var email = document.getElementById('a-email').value.trim();
+  var pass = document.getElementById('a-pass').value;
+  if (!email || !pass) { showErr('Completa tu correo y contraseña.'); return; }
+  var btn = document.getElementById('a-btn');
+  btn.textContent = '...'; btn.disabled = true;
+  try {
+    var result;
+    if (authMode === 'up') {
+      var nombre = document.getElementById('a-nombre').value.trim();
+      result = await sb.auth.signUp({ email: email, password: pass });
+      if (result.error) throw result.error;
+      if (nombre) A.nombre = nombre;
+    } else {
+      result = await sb.auth.signInWithPassword({ email: email, password: pass });
+      if (result.error) throw result.error;
     }
+    await cargarSB();
+    show('s-welcome');
+    prepWelcome();
+  } catch(e) {
+    var msgs = { 'Invalid login credentials': 'Correo o contraseña incorrectos.', 'User already registered': 'Ya tienes cuenta. Usa Entrar.', 'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres.' };
+    showErr(msgs[e.message] || e.message);
+    btn.textContent = authMode === 'up' ? 'Crear mi cuenta' : 'Entrar';
+    btn.disabled = false;
+  }
+}
+
+async function doMagic() {
+  if (!sb) return;
+  var email = document.getElementById('a-email').value.trim();
+  if (!email) { showErr('Escribe tu correo primero.'); return; }
+  await sb.auth.signInWithOtp({ email: email });
+  show('s-magic');
+}
+
+function showErr(msg) {
+  var el = document.getElementById('a-err');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+async function guardarSB() {
+  guardarLocal();
+  if (!sb) return;
+  try {
+    var ud = await sb.auth.getUser();
+    if (!ud.data || !ud.data.user) return;
+    await sb.from('fichas').upsert({ email: ud.data.user.email, data: { nombre: A.nombre, foto: A.foto, resp: A.resp }, updated_at: new Date().toISOString() }, { onConflict: 'email' });
+  } catch(e) { console.warn('Error guardando en Supabase:', e); }
+}
+
+async function cargarSB() {
+  if (!sb) return;
+  try {
+    var ud = await sb.auth.getUser();
+    if (!ud.data || !ud.data.user) return;
+    var res = await sb.from('fichas').select('data').eq('email', ud.data.user.email).single();
+    if (res.data && res.data.data) {
+      A.nombre = res.data.data.nombre || '';
+      A.foto = res.data.data.foto || null;
+      A.resp = res.data.data.resp || {};
+    }
+  } catch(e) { cargarLocal(); }
+}
+
+async function cerrarSesion() {
+  if (sb) await sb.auth.signOut();
+  A.nombre = ''; A.foto = null; A.resp = {};
+  localStorage.removeItem('fenix_v2');
+  show('s-auth');
+}
+
+function prepWelcome() {
+  var inp = document.getElementById('inp-nombre');
+  if (inp && A.nombre) inp.value = A.nombre;
+  if (A.foto) {
+    var img = document.getElementById('prev-foto');
+    if (img) { img.src = A.foto; img.style.display = 'block'; }
+    var ph = document.getElementById('foto-ph');
+    if (ph) ph.style.display = 'none';
+  }
+  var b = document.getElementById('banner-bienvenida');
+  if (b) b.innerHTML = '';
+  if (A.nombre) {
     var banner = document.createElement('div');
     banner.style.cssText = 'background:#FFF8E0;border:1px solid #D4AC00;border-radius:10px;padding:10px 14px;font-size:12px;color:#9a7a00;margin:0 0 1rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap';
+    var sp = document.createElement('span');
     var bs = document.createElement('strong'); bs.textContent = A.nombre;
-    var span = document.createElement('span');
-    span.appendChild(document.createTextNode('Bienvenida de vuelta, '));
-    span.appendChild(bs);
-    span.appendChild(document.createTextNode(' — tu progreso está guardado.'));
-    var bc = document.createElement('button'); bc.textContent = 'Continuar'; bc.style.cssText = 'background:#4B168E;color:white;border:none;border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer;margin-left:auto'; bc.onclick = function() { goMods(); };
-    var br = document.createElement('button'); br.textContent = 'Empezar de nuevo'; br.style.cssText = 'background:none;border:none;font-size:10px;color:#aaa;cursor:pointer'; br.onclick = limpiarSesion;
-    banner.appendChild(span); banner.appendChild(bc); banner.appendChild(br);
-    var b = document.getElementById('banner-bienvenida');
-    if (b) b.appendChild(banner);
+    sp.appendChild(document.createTextNode('Bienvenida de vuelta, '));
+    sp.appendChild(bs);
+    sp.appendChild(document.createTextNode(' — tu progreso está guardado.'));
+    var bc = document.createElement('button'); bc.textContent = 'Continuar'; bc.style.cssText = 'background:#4B168E;color:white;border:none;border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer;margin-left:auto'; bc.onclick = goMods;
+    banner.appendChild(sp); banner.appendChild(bc);
+    b.appendChild(banner);
   }
+}
+
+// ── ARRANQUE CON AUTH ──
+(function() {
+  if (!initSB()) {
+    // Supabase no cargó — modo local
+    if (cargarLocal() && A.nombre) prepWelcome();
+    return;
+  }
+  sb.auth.getSession().then(function(res) {
+    if (res.data && res.data.session) {
+      cargarSB().then(function() { show('s-welcome'); prepWelcome(); });
+    } else {
+      show('s-auth');
+    }
+  }).catch(function() { show('s-auth'); });
+
+  sb.auth.onAuthStateChange(function(event, session) {
+    if (event === 'SIGNED_IN' && session) {
+      cargarSB().then(function() { show('s-welcome'); prepWelcome(); });
+    } else if (event === 'SIGNED_OUT') {
+      show('s-auth');
+    }
+  });
 })();
+
 </script>
 </body>
 </html>
