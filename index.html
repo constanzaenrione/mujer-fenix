@@ -560,7 +560,7 @@ async function generarNarr(nf) {
   if (r.amor_c) d += 'Trata su cuerpo: ' + r.amor_c.join(', ') + '\n';
   if (r.hobbies) d += 'Le alegra: ' + r.hobbies.join(', ') + '\n';
   try {
-    var res = await fetch('https://mujerfenix.conyenrione.workers.dev/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, system: 'Coach de transformacion de identidad para mujeres de 40+. Calido, directo, poetico sin cursilerias. Sin asteriscos ni markdown. Parrafos cortos. Segunda persona (tu). Espanol con tildes. Maximo 4 parrafos.', messages: [{ role: 'user', content: 'Escribe el relato del dia a dia de ' + nf + ' con esta informacion:\n' + d + '\nModulo actual: ' + (modActivo ? modActivo.nombre : 'Base') + '. Concreto, inspirador, que ella pueda reconocerse.' }] }) });
+    var res = await fetch('https://mujerfenix.conyenrione.workers.dev/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1000, system: 'Coach de transformacion de identidad para mujeres de 40+. Calido, directo, poetico sin cursilerias. Sin asteriscos ni markdown. Parrafos cortos. Segunda persona (tu). Espanol con tildes. Maximo 4 parrafos.', messages: [{ role: 'user', content: 'Escribe el relato del dia a dia de ' + nf + ' con esta informacion:\n' + d + '\nModulo actual: ' + (modActivo ? modActivo.nombre : 'Base') + '. Concreto, inspirador, que ella pueda reconocerse.' }] }) });
     if (!res.ok) throw new Error('Error ' + res.status);
     var data = await res.json();
     var txt = data.content && data.content[0] ? data.content[0].text : '';
@@ -588,7 +588,7 @@ async function generarNarrFull(nf, caps) {
     });
   });
   try {
-    var res = await fetch('https://mujerfenix.conyenrione.workers.dev/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, system: 'Coach de transformacion de identidad para mujeres de 40+. Calido, directo, poetico. Sin markdown. Parrafos cortos. Segunda persona. Espanol. Max 5 parrafos.', messages: [{ role: 'user', content: 'Narrativa integrada del dia a dia de ' + nf + ' con todas sus capas:\n' + d }] }) });
+    var res = await fetch('https://mujerfenix.conyenrione.workers.dev/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1000, system: 'Coach de transformacion de identidad para mujeres de 40+. Calido, directo, poetico. Sin markdown. Parrafos cortos. Segunda persona. Espanol. Max 5 parrafos.', messages: [{ role: 'user', content: 'Narrativa integrada del dia a dia de ' + nf + ' con todas sus capas:\n' + d }] }) });
     if (!res.ok) throw new Error('Error ' + res.status);
     var data = await res.json();
     var txt = data.content && data.content[0] ? data.content[0].text : '';
@@ -627,11 +627,11 @@ async function generarCarta(completa) {
   var sys = 'Escribes cartas profundamente transformadoras del YO FUTURO al YO PRESENTE para mujeres de 40+. Intimo, calido, que toca el alma. Como si fuera la misma mujer escribiendose desde el futuro. Habla de lo que ya logro, como se siente ahora, que cambio en su vida concreta. Sin asteriscos ni markdown. Empieza con Querida ' + A.nombre + ', y termina con ' + nf + '. Espanol con tildes. Maximo 6 parrafos emotivos y concretos.';
   var usr = 'Escribe la carta para ' + A.nombre + ' (su identidad Fenix es ' + nf + '). Usa esta informacion:\n\n' + d;
   try {
-    var res = await fetch('https://mujerfenix.conyenrione.workers.dev/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1500, system: sys, messages: [{ role: 'user', content: usr }] }) });
-    if (!res.ok) throw new Error('Error ' + res.status);
+    var res = await fetch('https://mujerfenix.conyenrione.workers.dev/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1500, system: sys, messages: [{ role: 'user', content: usr }] }) });
     var data = await res.json();
+    if (!res.ok) throw new Error('Error ' + res.status + ': ' + JSON.stringify(data));
     var txt = data.content && data.content[0] ? data.content[0].text : '';
-    if (!txt) throw new Error('Respuesta vacia');
+    if (!txt) throw new Error('Respuesta vacia. Detalle: ' + JSON.stringify(data));
     var ld = document.getElementById('c-ld'); if (ld) ld.style.display = 'none';
     var cr = document.getElementById('c-res'); if (cr) {
       cr.style.display = 'block';
@@ -692,7 +692,7 @@ async function generarTarjeta() {
   if (sentir && sentir.libre) d += 'Sensacion: ' + sentir.libre + '\n';
   if (rb.frase) d += 'Su frase: ' + rb.frase + '\n';
   try {
-    var res = await fetch('https://mujerfenix.conyenrione.workers.dev/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1200, system: 'Escribes tarjetas de visualizacion para mujeres de 40+. Primera persona singular, tiempo presente, como si ya estuviera viviendo ese dia. Calido, sensorial, concreto. Sin asteriscos ni markdown. 4-5 parrafos cortos. Comienza con: Hoy es un martes cualquiera de mi vida. Y sin embargo... Espanol con tildes.', messages: [{ role: 'user', content: 'Escribe la tarjeta de visualizacion del dia de la foto para ' + nf + ':\n\n' + d }] }) });
+    var res = await fetch('https://mujerfenix.conyenrione.workers.dev/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1200, system: 'Escribes tarjetas de visualizacion para mujeres de 40+. Primera persona singular, tiempo presente, como si ya estuviera viviendo ese dia. Calido, sensorial, concreto. Sin asteriscos ni markdown. 4-5 parrafos cortos. Comienza con: Hoy es un martes cualquiera de mi vida. Y sin embargo... Espanol con tildes.', messages: [{ role: 'user', content: 'Escribe la tarjeta de visualizacion del dia de la foto para ' + nf + ':\n\n' + d }] }) });
     if (!res.ok) throw new Error('Error ' + res.status);
     var data = await res.json();
     var txt2 = data.content && data.content[0] ? data.content[0].text : '';
