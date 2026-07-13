@@ -863,7 +863,14 @@ async function guardarSB() {
   try {
     var ud = await sb.auth.getUser();
     if (!ud.data || !ud.data.user) return;
-    await sb.from('fichas').upsert({ email: ud.data.user.email, data: { nombre: A.nombre, foto: A.foto, resp: A.resp }, updated_at: new Date().toISOString() }, { onConflict: 'email' });
+    var email = ud.data.user.email;
+    // IMPORTANTE: leer primero lo existente para no borrar dias/progreso guardados por otros módulos
+    var res = await sb.from('fichas').select('data').eq('email', email).single();
+    var existing = (res.data && res.data.data) ? res.data.data : {};
+    existing.nombre = A.nombre;
+    existing.foto = A.foto;
+    existing.resp = A.resp;
+    await sb.from('fichas').upsert({ email: email, data: existing, updated_at: new Date().toISOString() }, { onConflict: 'email' });
   } catch(e) { console.warn('Error guardando en Supabase:', e); }
 }
 
@@ -877,6 +884,9 @@ async function cargarSB() {
       A.nombre = res.data.data.nombre || '';
       A.foto = res.data.data.foto || null;
       A.resp = res.data.data.resp || {};
+      // Cargar también Mi Día Fénix y Mi Progreso desde el mismo registro
+      if (res.data.data.dias) localStorage.setItem('fenix_dia_v1', JSON.stringify(res.data.data.dias));
+      if (res.data.data.progreso) localStorage.setItem('fenix_progreso_v1', JSON.stringify(res.data.data.progreso));
     }
   } catch(e) { cargarLocal(); }
 }
@@ -933,21 +943,31 @@ var WORKER_URL = 'https://mujerfenix.conyenrione.workers.dev/';
 function abrirDiaFenix() {
   DF.fecha = new Date().toISOString().split('T')[0];
   DF.tabActiva = 'amanecer';
+  dfSincronizarEstados();
   dfActualizarFecha();
   show('s-dia-fenix');
   dfRenderTab();
+}
+
+function dfSincronizarEstados() {
+  var data = dfGetData();
+  DF.estadoSel = data.estado !== undefined ? data.estado : null;
+  DF.tensionSel = data.tension !== undefined ? data.tension : null;
+  _estadoCierreSel = (data.cierre && data.cierre.estado !== undefined) ? data.cierre.estado : null;
 }
 
 function dfNavDia(d) {
   var dt = new Date(DF.fecha + 'T00:00:00');
   dt.setDate(dt.getDate() + d);
   DF.fecha = dt.toISOString().split('T')[0];
+  dfSincronizarEstados();
   dfActualizarFecha();
   dfRenderTab();
 }
 
 function dfIrHoy() {
   DF.fecha = new Date().toISOString().split('T')[0];
+  dfSincronizarEstados();
   dfActualizarFecha();
   dfRenderTab();
 }
@@ -1000,7 +1020,7 @@ async function dfSyncSB(allData) {
     var existing = (res.data && res.data.data) ? res.data.data : {};
     existing.dias = allData;
     await sb.from('fichas').upsert({ email: email, data: existing, updated_at: new Date().toISOString() }, { onConflict: 'email' });
-  } catch(e) {}
+  } catch(e) { console.warn('Error sincronizando Mi Día Fénix:', e); }
 }
 
 async function dfLoadFromSB() {
@@ -1012,7 +1032,7 @@ async function dfLoadFromSB() {
     if (res.data && res.data.data && res.data.data.dias) {
       localStorage.setItem('fenix_dia_v1', JSON.stringify(res.data.data.dias));
     }
-  } catch(e) {}
+  } catch(e) { console.warn('Error cargando Mi Día Fénix:', e); }
 }
 
 // ── AMANECER ──
@@ -1027,8 +1047,6 @@ function dfRenderAmanecer() {
     {v:2,e:'😊',l:'Feliz con\nenergía',c:'#43A047'},
     {v:3,e:'🌟',l:'Optimista\nexpansiva',c:'#7B1FA2'}
   ];
-  DF.estadoSel = data.estado !== undefined ? data.estado : null;
-  DF.tensionSel = data.tension !== undefined ? data.tension : null;
 
   var html = '<div class="df-card"><h3>😊 ¿Cómo amaneciste?</h3>';
   html += '<div class="df-estado-grid">';
@@ -1543,11 +1561,6 @@ function dfRenderTab() {
   else if (DF.tabActiva === 'cierre') html = dfRenderCierre();
   c.innerHTML = html;
   c.scrollTop = 0;
-  // Restore cierre estado sel from data
-  if (DF.tabActiva === 'cierre') {
-    var data = dfGetData();
-    _estadoCierreSel = (data.cierre && data.cierre.estado !== undefined) ? data.cierre.estado : null;
-  }
 }
 
 // ── TOAST ──
