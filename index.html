@@ -887,6 +887,7 @@ async function cargarSB() {
       // Cargar también Mi Día Fénix y Mi Progreso desde el mismo registro
       if (res.data.data.dias) localStorage.setItem('fenix_dia_v1', JSON.stringify(res.data.data.dias));
       if (res.data.data.progreso) localStorage.setItem('fenix_progreso_v1', JSON.stringify(res.data.data.progreso));
+      if (res.data.data.comidasGuardadas) localStorage.setItem('fenix_comidas_guardadas_v1', JSON.stringify(res.data.data.comidasGuardadas));
     }
   } catch(e) { cargarLocal(); }
 }
@@ -929,11 +930,10 @@ function prepWelcome() {
 // ════════════════════════════════════════
 var DF = {
   fecha: new Date().toISOString().split('T')[0],
-  tabActiva: 'amanecer',
-  estadoSel: null,
-  tensionSel: null,
+  tabActiva: 'nutricion',
   cargandoIA: false,
-  editandoComida: null
+  editandoComida: null,
+  fotoComidaTemp: null
 };
 
 // Metas por defecto (62kg)
@@ -942,32 +942,22 @@ var WORKER_URL = 'https://mujerfenix.conyenrione.workers.dev/';
 
 function abrirDiaFenix() {
   DF.fecha = new Date().toISOString().split('T')[0];
-  DF.tabActiva = 'amanecer';
-  dfSincronizarEstados();
+  DF.tabActiva = 'nutricion';
   dfActualizarFecha();
   show('s-dia-fenix');
   dfRenderTab();
-}
-
-function dfSincronizarEstados() {
-  var data = dfGetData();
-  DF.estadoSel = data.estado !== undefined ? data.estado : null;
-  DF.tensionSel = data.tension !== undefined ? data.tension : null;
-  _estadoCierreSel = (data.cierre && data.cierre.estado !== undefined) ? data.cierre.estado : null;
 }
 
 function dfNavDia(d) {
   var dt = new Date(DF.fecha + 'T00:00:00');
   dt.setDate(dt.getDate() + d);
   DF.fecha = dt.toISOString().split('T')[0];
-  dfSincronizarEstados();
   dfActualizarFecha();
   dfRenderTab();
 }
 
 function dfIrHoy() {
   DF.fecha = new Date().toISOString().split('T')[0];
-  dfSincronizarEstados();
   dfActualizarFecha();
   dfRenderTab();
 }
@@ -1035,69 +1025,6 @@ async function dfLoadFromSB() {
   } catch(e) { console.warn('Error cargando Mi Día Fénix:', e); }
 }
 
-// ── AMANECER ──
-function dfRenderAmanecer() {
-  var data = dfGetData();
-  var ESTADOS = [
-    {v:-3,e:'😰',l:'Temerosa\nsin energía',c:'#B71C1C'},
-    {v:-2,e:'😔',l:'Disgustada\ntriste',c:'#E53935'},
-    {v:-1,e:'😕',l:'Sentimientos\ndesagradables',c:'#FF7043'},
-    {v:0,e:'😐',l:'Neutro',c:'#9E9E9E'},
-    {v:1,e:'🙂',l:'Sentimientos\nagradables',c:'#66BB6A'},
-    {v:2,e:'😊',l:'Feliz con\nenergía',c:'#43A047'},
-    {v:3,e:'🌟',l:'Optimista\nexpansiva',c:'#7B1FA2'}
-  ];
-
-  var html = '<div class="df-card"><h3>😊 ¿Cómo amaneciste?</h3>';
-  html += '<div class="df-estado-grid">';
-  ESTADOS.forEach(function(o) {
-    var sel = DF.estadoSel === o.v;
-    html += '<div class="df-estado-opt' + (sel?' sel':'') + '" onclick="dfSelEstado(' + o.v + ')" style="' + (sel?'border-color:'+o.c+';background:'+o.c+'18':'')+'">';
-    html += '<span style="font-size:' + (sel?'1.55':'1.2') + 'rem">' + o.e + '</span>';
-    html += '<span style="font-size:.48rem;text-align:center;white-space:pre-line;color:' + (sel?o.c:'#bbb') + '">' + o.l + '</span>';
-    html += '<span style="font-size:.65rem;font-weight:700;color:' + (sel?o.c:'#ccc') + '">' + (o.v>0?'+':'') + o.v + '</span></div>';
-  });
-  html += '</div></div>';
-
-  html += '<div class="df-card"><h3>✍️ Cómo me sentí (en mis propias palabras)</h3>';
-  html += '<textarea id="df-a-nota" rows="3" placeholder="Describe con tus propias palabras cómo fue tu despertar internamente..." style="width:100%;padding:10px 12px;border:1.5px solid var(--lv);border-radius:9px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;resize:none">' + (data.nota_amanecer||'') + '</textarea></div>';
-
-  html += '<div class="df-card"><h3>⚡ Tensión corporal <span style="font-size:10px;font-weight:400;color:var(--su)">1=sin tensión · 10=máxima</span></h3>';
-  html += '<div class="df-tension-grid">';
-  var colores = ['#43A047','#66BB6A','#8BC34A','#CDDC39','#FFEB3B','#FFC107','#FF9800','#FF5722','#F44336','#B71C1C'];
-  for (var i=1;i<=10;i++) {
-    var sel = DF.tensionSel === i;
-    html += '<div class="df-tension-opt' + (sel?' sel':'') + '" onclick="dfSelTension(' + i + ')" style="' + (sel?'border-color:'+colores[i-1]+';background:'+colores[i-1]+'22':'')+'">';
-    html += '<div style="width:18px;height:18px;border-radius:50%;background:' + (sel?colores[i-1]:'#eee') + '"></div>';
-    html += '<span style="font-size:.62rem;font-weight:' + (sel?'700':'400') + ';color:' + (sel?colores[i-1]:'#bbb') + '">' + i + '</span></div>';
-  }
-  html += '</div></div>';
-
-  html += '<div class="df-card"><h3>🌟 Mi intención de hoy</h3>';
-  html += '<textarea id="df-a-intencion" rows="2" placeholder="¿Qué intención tienes para hoy? ¿Cómo quieres ser hoy?" style="width:100%;padding:10px 12px;border:1.5px solid var(--lv);border-radius:9px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;resize:none">' + (data.intencion||'') + '</textarea></div>';
-
-  html += '<button class="btn bp" onclick="dfGuardarAmanecer()" style="margin-top:.5rem">Guardar amanecer</button>';
-  return html;
-}
-
-function dfSelEstado(v) {
-  DF.estadoSel = DF.estadoSel === v ? null : v;
-  dfRenderTab();
-}
-function dfSelTension(v) {
-  DF.tensionSel = DF.tensionSel === v ? null : v;
-  dfRenderTab();
-}
-function dfGuardarAmanecer() {
-  dfSaveData({
-    estado: DF.estadoSel,
-    tension: DF.tensionSel,
-    nota_amanecer: document.getElementById('df-a-nota')?.value || '',
-    intencion: document.getElementById('df-a-intencion')?.value || ''
-  });
-  dfToast('Amanecer guardado ✓');
-}
-
 // ── NUTRICIÓN ──
 function dfRenderNutricion() {
   var data = dfGetData();
@@ -1135,6 +1062,7 @@ function dfRenderNutricion() {
       var editando = DF.editandoComida === m.id;
       html += '<div class="df-meal-item" style="flex-direction:column;align-items:stretch">';
       html += '<div style="display:flex;align-items:flex-start;gap:.5rem">';
+      if (m.foto) html += '<img src="' + m.foto + '" style="width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0">';
       html += '<div style="flex:1">';
       html += '<div style="font-size:.65rem;font-weight:600;color:var(--mo);margin-bottom:2px">' + m.tiempo + '</div>';
 
@@ -1170,6 +1098,7 @@ function dfRenderNutricion() {
       if (!editando && !m.pendiente && !m.loading) {
         html += '<div style="display:flex;flex-direction:column;gap:4px">';
         html += '<button class="df-meal-del" onclick="dfEditarComida(' + m.id + ')" title="Editar">✏️</button>';
+        html += '<button class="df-meal-del" onclick="dfGuardarComidaFrecuente(' + m.id + ')" title="Guardar como frecuente">⭐</button>';
         html += '<button class="df-meal-del" onclick="dfEliminarComida(' + idx + ')" title="Eliminar">✕</button>';
         html += '</div>';
       } else if (!editando && (m.pendiente || m.loading)) {
@@ -1181,32 +1110,106 @@ function dfRenderNutricion() {
   }
   html += '</div>';
 
+  // Comidas guardadas / frecuentes
+  var guardadas = gcGetAll();
+  html += '<div class="df-card"><h3>⭐ Mis comidas guardadas</h3>';
+  if (guardadas.length === 0) {
+    html += '<div style="font-size:11px;color:#bbb;text-align:center;padding:.4rem 0">Guarda una comida con ⭐ para agregarla rápido la próxima vez, sin esperar a la IA.</div>';
+  } else {
+    guardadas.forEach(function(g) {
+      html += '<div class="df-meal-item">';
+      if (g.foto) html += '<img src="' + g.foto + '" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0">';
+      html += '<div style="flex:1">';
+      html += '<div style="font-size:.8rem;font-weight:600;color:var(--tx)">' + g.nombre + '</div>';
+      html += '<div style="display:flex;gap:5px;margin-top:2px;flex-wrap:wrap">';
+      html += '<span style="font-size:.58rem;background:#FFF8E0;color:#9a7a00;padding:1px 5px;border-radius:4px">' + g.kcal + ' kcal</span>';
+      html += '<span style="font-size:.58rem;background:rgba(232,99,74,.1);color:#E8634A;padding:1px 5px;border-radius:4px">' + g.pro + 'g P</span>';
+      html += '<span style="font-size:.58rem;background:rgba(122,158,126,.1);color:#7A9E7E;padding:1px 5px;border-radius:4px">' + g.car + 'g C</span>';
+      html += '<span style="font-size:.58rem;background:rgba(142,200,212,.1);color:#8EC8D4;padding:1px 5px;border-radius:4px">' + g.fat + 'g G</span>';
+      html += '</div></div>';
+      html += '<button class="btn bp" style="margin:0;padding:6px 10px;font-size:11px;flex-shrink:0" onclick="gcAgregarAHoy(' + g.id + ')">+ Hoy</button>';
+      html += '<button class="df-meal-del" onclick="gcEliminar(' + g.id + ')" title="Eliminar de guardadas">✕</button>';
+      html += '</div>';
+    });
+  }
+  html += '</div>';
+
   // Input nueva comida
   html += '<div class="df-card"><h3>➕ Agregar comida <span class="df-ai-badge">IA calcula macros</span></h3>';
   html += '<select id="df-tiempo" style="width:100%;padding:8px 10px;border:1.5px solid var(--lv);border-radius:9px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;margin-bottom:.6rem">';
   ['☀️ Desayuno','🌿 Snack pre-entreno','🍽️ Almuerzo','🍎 Merienda','💪 Post-entreno','🌙 Cena','📝 Otro'].forEach(function(t){ html += '<option>' + t + '</option>'; });
   html += '</select>';
-  html += '<textarea id="df-comida-input" rows="2" placeholder="Ej: ½ marraqueta con 2 huevos revueltos y espinaca..." style="width:100%;padding:10px 12px;border:1.5px solid var(--lv);border-radius:9px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;resize:none;margin-bottom:.6rem"></textarea>';
+
+  html += '<div style="display:flex;gap:8px;margin-bottom:.6rem">';
+  html += '<div id="df-foto-preview" onclick="document.getElementById(\'df-foto-input\').click()" style="width:64px;height:64px;border-radius:10px;background:var(--ll);border:2px dashed var(--lv);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;overflow:hidden">';
+  if (DF.fotoComidaTemp) html += '<img src="' + DF.fotoComidaTemp + '" style="width:100%;height:100%;object-fit:cover">';
+  else html += '<span style="font-size:1.4rem">📷</span>';
+  html += '</div>';
+  html += '<div style="flex:1"><textarea id="df-comida-input" rows="2" placeholder="Ej: ½ marraqueta con 2 huevos revueltos y espinaca... (o solo sube una foto)" style="width:100%;padding:10px 12px;border:1.5px solid var(--lv);border-radius:9px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;resize:none;height:64px;box-sizing:border-box"></textarea></div>';
+  html += '</div>';
+  html += '<input type="file" id="df-foto-input" accept="image/*" capture="environment" style="display:none" onchange="dfCargarFotoComida(event)">';
+  if (DF.fotoComidaTemp) html += '<div style="font-size:11px;color:var(--su);margin-bottom:.5rem">📸 Foto lista — puedes agregar una descripción o dejar que la IA analice solo la foto <span onclick="dfQuitarFotoComida()" style="color:#c00;cursor:pointer;text-decoration:underline;margin-left:6px">quitar foto</span></div>';
+
   html += '<button class="btn bp" onclick="dfAgregarComida()" style="margin-top:0">Agregar y calcular con IA</button>';
   html += '</div>';
 
   return html;
 }
 
+function dfCargarFotoComida(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var canvas = document.createElement('canvas');
+      var maxW = 500;
+      var scale = Math.min(1, maxW / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      DF.fotoComidaTemp = canvas.toDataURL('image/jpeg', 0.7);
+      dfRenderTab();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function dfQuitarFotoComida() {
+  DF.fotoComidaTemp = null;
+  dfRenderTab();
+}
+
 // Llama a la IA pidiendo macros O una pregunta de aclaración si falta información
-async function dfLlamarIANutricion(descripcion, tiempo) {
-  var prompt = 'Eres nutricionista experta calculando macronutrientes con precisión para una app de seguimiento.\n\n' +
-    'Comida: "' + descripcion + '"\nTipo: ' + tiempo + '\n\n' +
-    'Si la descripción tiene TODA la información necesaria (cantidades o porciones razonablemente claras), responde SOLO con este JSON sin markdown:\n' +
+// Soporta descripción de texto y/o foto del plato (visión)
+async function dfLlamarIANutricion(descripcion, tiempo, fotoBase64) {
+  var promptTexto = 'Eres nutricionista experta calculando macronutrientes con precisión para una app de seguimiento.\n\n' +
+    (fotoBase64 ? 'Analiza la foto del plato adjunta. ' + (descripcion ? 'El usuario también agregó esta descripción: "' + descripcion + '". ' : '') : 'Comida: "' + descripcion + '"\n') +
+    'Tipo: ' + tiempo + '\n\n' +
+    'Si tienes TODA la información necesaria (cantidades o porciones razonablemente claras a partir de la foto y/o texto), responde SOLO con este JSON sin markdown:\n' +
     '{"tipo":"macros","kcal":número,"pro":número,"car":número,"fat":número,"nota":"observación breve máximo 6 palabras en español"}\n\n' +
-    'Si falta un dato IMPORTANTE para calcular bien (ej: cantidad/gramos de un ingrediente clave, tipo de preparación, tamaño de porción) o tienes una duda real, responde SOLO con este JSON:\n' +
+    'Si falta un dato IMPORTANTE para calcular bien (ej: cantidad/gramos de un ingrediente clave que no se aprecia bien en la foto, tipo de preparación, tamaño de porción) o tienes una duda real, responde SOLO con este JSON:\n' +
     '{"tipo":"pregunta","pregunta":"tu pregunta breve y específica en español, máximo 15 palabras"}\n\n' +
-    'Prioriza calcular directamente usando porciones estándar chilenas razonables. Solo pregunta si es realmente ambiguo o falta un dato que cambia mucho el resultado (ej: "3 huevos" sin decir si son grandes o chicos no requiere pregunta, pero "un poco de arroz" sí podría).';
+    'Prioriza calcular directamente usando porciones estándar chilenas razonables y tu mejor estimación visual. Solo pregunta si es realmente ambiguo o falta un dato que cambia mucho el resultado.';
+
+  var content;
+  if (fotoBase64) {
+    var mediaType = fotoBase64.substring(5, fotoBase64.indexOf(';'));
+    var base64Data = fotoBase64.split(',')[1];
+    content = [
+      { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } },
+      { type: 'text', text: promptTexto }
+    ];
+  } else {
+    content = promptTexto;
+  }
 
   var res = await fetch(WORKER_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 300, messages: [{ role: 'user', content: prompt }] })
+    body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 300, messages: [{ role: 'user', content: content }] })
   });
   var d = await res.json();
   var txt = d.content && d.content[0] ? d.content[0].text.trim() : '{}';
@@ -1218,19 +1221,21 @@ async function dfAgregarComida() {
   var input = document.getElementById('df-comida-input');
   var tiempoEl = document.getElementById('df-tiempo');
   var desc = input ? input.value.trim() : '';
-  if (!desc) { input && input.focus(); return; }
+  var foto = DF.fotoComidaTemp;
+  if (!desc && !foto) { input && input.focus(); return; }
   var tiempo = tiempoEl ? tiempoEl.value : 'Comida';
 
   var data = dfGetData();
   if (!data.comidas) data.comidas = [];
-  var meal = { id: Date.now(), tiempo: tiempo, desc: desc, kcal:0, pro:0, car:0, fat:0, nota:'', loading:true };
+  var meal = { id: Date.now(), tiempo: tiempo, desc: desc || '(analizado por foto)', foto: foto || null, kcal:0, pro:0, car:0, fat:0, nota:'', loading:true };
   data.comidas.push(meal);
   dfSaveData({ comidas: data.comidas });
   if (input) input.value = '';
+  DF.fotoComidaTemp = null;
   dfRenderTab();
 
   try {
-    var resultado = await dfLlamarIANutricion(desc, tiempo);
+    var resultado = await dfLlamarIANutricion(desc, tiempo, foto);
     var freshData = dfGetData();
     var idx = freshData.comidas.findIndex(function(m){ return m.id === meal.id; });
     if (idx < 0) return;
@@ -1270,7 +1275,7 @@ async function dfResponderPregunta(mealId) {
   dfRenderTab();
 
   try {
-    var resultado = await dfLlamarIANutricion(descCompleta, data.comidas[idx].tiempo);
+    var resultado = await dfLlamarIANutricion(descCompleta, data.comidas[idx].tiempo, data.comidas[idx].foto);
     var freshData = dfGetData();
     var idx2 = freshData.comidas.findIndex(function(m){ return m.id === mealId; });
     if (idx2 < 0) return;
@@ -1318,7 +1323,7 @@ async function dfGuardarEdicionComida(mealId) {
   dfRenderTab();
 
   try {
-    var resultado = await dfLlamarIANutricion(nuevaDesc, data.comidas[idx].tiempo);
+    var resultado = await dfLlamarIANutricion(nuevaDesc, data.comidas[idx].tiempo, data.comidas[idx].foto);
     var freshData = dfGetData();
     var idx2 = freshData.comidas.findIndex(function(m){ return m.id === mealId; });
     if (idx2 < 0) return;
@@ -1348,6 +1353,93 @@ function dfEliminarComida(idx) {
   dfSaveData({ comidas: data.comidas });
   dfRenderTab();
 }
+
+// ── COMIDAS GUARDADAS (biblioteca de frecuentes) ──
+function gcGetAll() {
+  try { return JSON.parse(localStorage.getItem('fenix_comidas_guardadas_v1') || '[]'); } catch(e) { return []; }
+}
+function gcSaveAllLocal(arr) {
+  try { localStorage.setItem('fenix_comidas_guardadas_v1', JSON.stringify(arr)); } catch(e) {}
+}
+async function gcSyncSB(arr) {
+  if (!sb) return;
+  try {
+    var ud = await sb.auth.getUser();
+    if (!ud.data || !ud.data.user) return;
+    var email = ud.data.user.email;
+    var res = await sb.from('fichas').select('data').eq('email', email).single();
+    var existing = (res.data && res.data.data) ? res.data.data : {};
+    existing.comidasGuardadas = arr;
+    await sb.from('fichas').upsert({ email: email, data: existing, updated_at: new Date().toISOString() }, { onConflict: 'email' });
+  } catch(e) { console.warn('Error sincronizando comidas guardadas:', e); }
+}
+async function gcLoadFromSB() {
+  if (!sb) return;
+  try {
+    var ud = await sb.auth.getUser();
+    if (!ud.data || !ud.data.user) return;
+    var res = await sb.from('fichas').select('data').eq('email', ud.data.user.email).single();
+    if (res.data && res.data.data && res.data.data.comidasGuardadas) {
+      localStorage.setItem('fenix_comidas_guardadas_v1', JSON.stringify(res.data.data.comidasGuardadas));
+    }
+  } catch(e) { console.warn('Error cargando comidas guardadas:', e); }
+}
+function gcSaveAll(arr) {
+  gcSaveAllLocal(arr);
+  gcSyncSB(arr);
+}
+
+function dfGuardarComidaFrecuente(mealId) {
+  var data = dfGetData();
+  var meal = (data.comidas || []).find(function(m){ return m.id === mealId; });
+  if (!meal) return;
+  var nombreSugerido = meal.desc.length > 40 ? meal.desc.substring(0,40) + '…' : meal.desc;
+  var nombre = window.prompt('¿Con qué nombre quieres guardar esta comida?', nombreSugerido);
+  if (!nombre) return;
+  var guardadas = gcGetAll();
+  guardadas.push({
+    id: Date.now(),
+    nombre: nombre,
+    tiempo: meal.tiempo,
+    desc: meal.desc,
+    foto: meal.foto || null,
+    kcal: meal.kcal, pro: meal.pro, car: meal.car, fat: meal.fat
+  });
+  gcSaveAll(guardadas);
+  dfToast('⭐ Comida guardada para la próxima vez');
+  dfRenderTab();
+}
+
+function gcAgregarAHoy(gcId) {
+  var guardadas = gcGetAll();
+  var g = guardadas.find(function(x){ return x.id === gcId; });
+  if (!g) return;
+  var data = dfGetData();
+  if (!data.comidas) data.comidas = [];
+  data.comidas.push({
+    id: Date.now(),
+    tiempo: g.tiempo,
+    desc: g.desc,
+    foto: g.foto || null,
+    kcal: g.kcal, pro: g.pro, car: g.car, fat: g.fat,
+    nota: '', loading: false, pendiente: false
+  });
+  dfSaveData({ comidas: data.comidas });
+  dfToast('✓ Agregada a hoy sin esperar a la IA');
+  dfRenderTab();
+}
+
+function gcEliminar(gcId) {
+  if (!confirm('¿Quitar esta comida de tus guardadas?')) return;
+  var guardadas = gcGetAll().filter(function(g){ return g.id !== gcId; });
+  gcSaveAll(guardadas);
+  dfRenderTab();
+}
+
+// Cargar comidas guardadas desde Supabase al iniciar
+(function() {
+  setTimeout(function() { if (sb) gcLoadFromSB(); }, 1700);
+})();
 
 // ── MOVIMIENTO ──
 function dfRenderMovimiento() {
@@ -1501,64 +1593,14 @@ function dfToggleHab(id) {
   dfRenderTab();
 }
 
-// ── CIERRE ──
-function dfRenderCierre() {
-  var data = dfGetData();
-  var cierre = data.cierre || {};
-  var ESTADOS = [
-    {v:-3,e:'😰',c:'#B71C1C'},{v:-2,e:'😔',c:'#E53935'},{v:-1,e:'😕',c:'#FF7043'},
-    {v:0,e:'😐',c:'#9E9E9E'},{v:1,e:'🙂',c:'#66BB6A'},{v:2,e:'😊',c:'#43A047'},{v:3,e:'🌟',c:'#7B1FA2'}
-  ];
-  var estadoCierre = cierre.estado !== undefined ? cierre.estado : null;
-
-  var html = '<div class="df-card"><h3>🌙 ¿Cómo cierras el día?</h3>';
-  html += '<div class="df-estado-grid">';
-  ESTADOS.forEach(function(o) {
-    var sel = estadoCierre === o.v;
-    html += '<div class="df-estado-opt' + (sel?' sel':'') + '" onclick="dfSelEstadoCierre(' + o.v + ')" style="' + (sel?'border-color:'+o.c+';background:'+o.c+'18':'') + '">';
-    html += '<span style="font-size:' + (sel?'1.55':'1.2') + 'rem">' + o.e + '</span></div>';
-  });
-  html += '</div></div>';
-
-  html += '<div class="df-card"><h3>🚀 Éxitos del día</h3>';
-  html += '<textarea id="df-c-exitos" rows="3" placeholder="¿Qué logré hoy? ¿De qué me enorgullezco?" style="width:100%;padding:10px 12px;border:1.5px solid var(--lv);border-radius:9px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;resize:none">' + (cierre.exitos||'') + '</textarea></div>';
-
-  html += '<div class="df-card"><h3>🙏 Lo que agradezco hoy</h3>';
-  html += '<textarea id="df-c-agradezco" rows="3" placeholder="¿Qué cosas, personas o momentos de hoy merecen gratitud?" style="width:100%;padding:10px 12px;border:1.5px solid var(--lv);border-radius:9px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;resize:none">' + (cierre.agradezco||'') + '</textarea></div>';
-
-  html += '<div class="df-card"><h3>📝 Nota libre (opcional)</h3>';
-  html += '<textarea id="df-c-nota" rows="2" placeholder="Algo más que quieras recordar de hoy..." style="width:100%;padding:10px 12px;border:1.5px solid var(--lv);border-radius:9px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;resize:none">' + (cierre.nota||'') + '</textarea></div>';
-
-  html += '<button class="btn bp" onclick="dfGuardarCierre()" style="margin-top:.5rem">💾 Guardar registro del día</button>';
-  return html;
-}
-
-var _estadoCierreSel = null;
-function dfSelEstadoCierre(v) {
-  _estadoCierreSel = _estadoCierreSel === v ? null : v;
-  dfRenderTab();
-}
-function dfGuardarCierre() {
-  var data = dfGetData();
-  var cierre = data.cierre || {};
-  if (_estadoCierreSel !== null) cierre.estado = _estadoCierreSel;
-  cierre.exitos = document.getElementById('df-c-exitos')?.value || '';
-  cierre.agradezco = document.getElementById('df-c-agradezco')?.value || '';
-  cierre.nota = document.getElementById('df-c-nota')?.value || '';
-  dfSaveData({ cierre: cierre });
-  dfToast('Día guardado ✓');
-}
-
 // ── RENDER PRINCIPAL ──
 function dfRenderTab() {
   var c = document.getElementById('df-content');
   if (!c) return;
   var html = '';
-  if (DF.tabActiva === 'amanecer') html = dfRenderAmanecer();
-  else if (DF.tabActiva === 'nutricion') html = dfRenderNutricion();
+  if (DF.tabActiva === 'nutricion') html = dfRenderNutricion();
   else if (DF.tabActiva === 'movimiento') html = dfRenderMovimiento();
   else if (DF.tabActiva === 'habitos') html = dfRenderHabitos();
-  else if (DF.tabActiva === 'cierre') html = dfRenderCierre();
   c.innerHTML = html;
   c.scrollTop = 0;
 }
@@ -1923,11 +1965,9 @@ function pgActualizarComparacion() {
 
   <!-- Tabs internos -->
   <div style="display:flex;overflow-x:auto;background:white;border-bottom:2px solid var(--lv);scrollbar-width:none">
-    <button class="df-tab active" id="dft-amanecer" onclick="dfTab('amanecer')">🌅 Amanecer</button>
-    <button class="df-tab" id="dft-nutricion" onclick="dfTab('nutricion')">🥗 Nutrición</button>
+    <button class="df-tab active" id="dft-nutricion" onclick="dfTab('nutricion')">🥗 Nutrición</button>
     <button class="df-tab" id="dft-movimiento" onclick="dfTab('movimiento')">💪 Movimiento</button>
     <button class="df-tab" id="dft-habitos" onclick="dfTab('habitos')">✨ Hábitos</button>
-    <button class="df-tab" id="dft-cierre" onclick="dfTab('cierre')">🌙 Cierre</button>
   </div>
 
   <div class="cnt" id="df-content" style="padding:1.2rem"></div>
