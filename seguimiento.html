@@ -95,21 +95,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--fo);color:var(--tx);min-h
       <h2>Seguimiento Fénix</h2>
       <p>Nutrición, movimiento y progreso.<br>Tu registro diario, simple y personal.</p>
     </div>
-    <input type="email" id="auth-email" class="field" placeholder="tu@correo.com" autocomplete="email">
-    <button class="btn bp" onclick="enviarMagicLink()">Enviar enlace de acceso</button>
-    <p style="font-size:11px;color:var(--su);text-align:center;margin-top:1rem;line-height:1.6">Te enviaremos un link a tu correo. Sin contraseñas — cada persona tiene su propio registro privado.</p>
-  </div>
-</div>
-
-<!-- ═══ MAGIC LINK ENVIADO ═══ -->
-<div class="screen" id="s-magic">
-  <div class="cnt">
-    <div class="hero">
-      <div style="font-size:3rem;margin-bottom:1rem">📩</div>
-      <h2>Revisa tu correo</h2>
-      <p>Te enviamos un enlace de acceso.<br>Ábrelo desde este mismo dispositivo para entrar.</p>
+    <div style="display:flex;margin:1.5rem 0 1rem;border-radius:10px;overflow:hidden;border:1.5px solid var(--lv)">
+      <button id="sf-tab-in" onclick="setTabSF('in')" style="flex:1;padding:10px;background:var(--mo);color:white;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer">Entrar</button>
+      <button id="sf-tab-up" onclick="setTabSF('up')" style="flex:1;padding:10px;background:white;color:var(--su);border:none;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer">Crear cuenta</button>
     </div>
-    <button class="btn bs" onclick="show('s-auth')">Volver</button>
+    <input type="email" id="auth-email" class="field" placeholder="tu@correo.com" autocomplete="email">
+    <input type="password" id="auth-pass" class="field" placeholder="Tu contraseña" autocomplete="current-password">
+    <div id="sf-err" style="display:none;background:#fff0f0;border:1px solid #ffcdd2;border-radius:9px;padding:9px 12px;font-size:12px;color:#c00;margin-bottom:.8rem"></div>
+    <button class="btn bp" id="sf-auth-btn" onclick="doAuthSF()">Entrar</button>
+    <p style="font-size:11px;color:var(--su);text-align:center;margin-top:1rem;line-height:1.6">Si ya tienes cuenta en Mujer Fénix, usa el mismo correo y contraseña — es la misma cuenta.</p>
   </div>
 </div>
 
@@ -153,16 +147,47 @@ function show(id) {
   var l2 = document.getElementById('sf-logo-2'); if (l2) l2.src = logo;
 })();
 
-// ── AUTH ──
-async function enviarMagicLink() {
+// ── AUTH (correo + contraseña, misma cuenta que Mujer Fénix) ──
+var sfAuthMode = 'in';
+function setTabSF(mode) {
+  sfAuthMode = mode;
+  document.getElementById('sf-tab-in').style.background = mode==='in' ? 'var(--mo)' : 'white';
+  document.getElementById('sf-tab-in').style.color = mode==='in' ? 'white' : 'var(--su)';
+  document.getElementById('sf-tab-up').style.background = mode==='up' ? 'var(--mo)' : 'white';
+  document.getElementById('sf-tab-up').style.color = mode==='up' ? 'white' : 'var(--su)';
+  document.getElementById('sf-auth-btn').textContent = mode==='up' ? 'Crear mi cuenta' : 'Entrar';
+  document.getElementById('sf-err').style.display = 'none';
+}
+async function doAuthSF() {
+  if (!sb) { sfShowErr('Sin conexión. Recarga la página.'); return; }
   var email = document.getElementById('auth-email').value.trim();
-  if (!email || !email.includes('@')) { alert('Ingresa un correo válido'); return; }
+  var pass = document.getElementById('auth-pass').value;
+  if (!email || !pass) { sfShowErr('Completa tu correo y contraseña.'); return; }
+  var btn = document.getElementById('sf-auth-btn');
+  btn.textContent = '...'; btn.disabled = true;
   try {
-    var redirectUrl = window.location.origin + window.location.pathname;
-    var res = await sb.auth.signInWithOtp({ email: email, options: { emailRedirectTo: redirectUrl } });
-    if (res.error) { alert('Error: ' + res.error.message); return; }
-    show('s-magic');
-  } catch(e) { alert('No se pudo enviar el enlace. Intenta de nuevo.'); }
+    var result;
+    if (sfAuthMode === 'up') {
+      result = await sb.auth.signUp({ email: email, password: pass });
+    } else {
+      result = await sb.auth.signInWithPassword({ email: email, password: pass });
+    }
+    if (result.error) throw result.error;
+    var label = document.getElementById('sf-userlabel');
+    if (label) label.textContent = email;
+    show('s-app');
+    await cargarTodoSB();
+    sfTab('nutricion');
+  } catch(e) {
+    var msgs = { 'Invalid login credentials': 'Correo o contraseña incorrectos.', 'User already registered': 'Ya tienes cuenta. Usa Entrar.', 'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres.' };
+    sfShowErr(msgs[e.message] || e.message);
+    btn.textContent = sfAuthMode === 'up' ? 'Crear mi cuenta' : 'Entrar';
+    btn.disabled = false;
+  }
+}
+function sfShowErr(msg) {
+  var el = document.getElementById('sf-err');
+  el.textContent = msg; el.style.display = 'block';
 }
 
 async function cerrarSesion() {
@@ -1015,10 +1040,6 @@ function pgActualizarComparacion() {
 // INIT
 // ═══════════════════════════════════════════
 window.addEventListener('load', async function() {
-  // Detectar si venimos de un magic link (hash con tokens)
-  if (window.location.hash.includes('access_token')) {
-    await new Promise(function(r){ setTimeout(r, 800); });
-  }
   var logueado = await verificarSesion();
   if (!logueado) show('s-auth');
 });
