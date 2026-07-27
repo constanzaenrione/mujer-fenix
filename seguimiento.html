@@ -42,11 +42,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--fo);color:var(--tx);min-h
 .df-card h3{font-size:13px;font-weight:600;color:var(--mo);margin-bottom:.6rem;display:flex;align-items:center;gap:6px;justify-content:space-between}
 .df-macro-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:.8rem}
 .df-macro-box{background:var(--fo);border-radius:9px;padding:.65rem;text-align:center;border:1px solid var(--lv)}
-.df-macro-val{font-size:1.3rem;font-weight:700;line-height:1}
-.df-macro-lbl{font-size:.6rem;text-transform:uppercase;letter-spacing:.06em;color:var(--su);margin-top:2px}
-.df-macro-meta{font-size:.58rem;color:#bbb;margin-top:1px}
+.df-macro-val{font-size:1.85rem;font-weight:700;line-height:1}
+.df-macro-lbl{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--su);margin-top:3px}
+.df-macro-meta{font-size:.74rem;color:#999;margin-top:2px}
 .df-bar-row{margin-bottom:6px}
-.df-bar-top{display:flex;justify-content:space-between;font-size:.65rem;margin-bottom:2px}
+.df-bar-top{display:flex;justify-content:space-between;font-size:.86rem;margin-bottom:3px;font-weight:500}
 .df-bar-bg{height:4px;background:var(--lv);border-radius:2px;overflow:hidden}
 .df-bar-fill{height:100%;border-radius:2px;transition:width .4s}
 .df-meal-item{background:var(--fo);border-radius:9px;padding:.6rem .8rem;margin-bottom:.5rem;display:flex;align-items:flex-start;gap:.5rem}
@@ -120,6 +120,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--fo);color:var(--tx);min-h
     <button class="tabbtn" id="tb-habitos" onclick="sfTab('habitos')">✨ Hábitos</button>
     <button class="tabbtn" id="tb-progreso" onclick="sfTab('progreso')">📊 Progreso</button>
   </div>
+  <style>.chat-bubble{background:white;border:1px solid var(--lv);border-radius:12px;padding:.8rem 1rem;margin-bottom:.6rem}
+  .chat-q{font-size:.92rem;font-weight:600;color:var(--mo);margin-bottom:.4rem}
+  .chat-a{font-size:.9rem;color:var(--tx);line-height:1.55}</style>
   <div id="sf-datebar" style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 1.2rem;background:white;border-bottom:1px solid var(--lv)"></div>
   <div class="cnt" id="sf-content"></div>
 </div>
@@ -430,12 +433,12 @@ function dfRenderNutricion() {
     ['− Consumidas', totals.kcal, '#C0392B'],
   ];
   filas.forEach(function(f) {
-    html += '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--fo);font-size:12px">';
+    html += '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--fo);font-size:15px">';
     html += '<span style="color:var(--su)">' + f[0] + '</span><span style="font-weight:700;color:' + f[2] + '">' + f[1] + ' kcal</span></div>';
   });
   var colorDif = diferencia >= 0 ? '#2E7D5B' : '#C0392B';
   var lblDif = diferencia >= 0 ? 'Disponibles hoy' : 'Sobre el objetivo';
-  html += '<div style="display:flex;justify-content:space-between;padding:8px 0 0;font-size:14px">';
+  html += '<div style="display:flex;justify-content:space-between;padding:10px 0 0;font-size:17px">';
   html += '<span style="font-weight:600;color:var(--tx)">' + lblDif + '</span><span style="font-weight:700;color:' + colorDif + '">' + (diferencia>=0?'':'+') + Math.abs(diferencia) + ' kcal</span></div>';
   html += '</div>';
 
@@ -448,18 +451,42 @@ function dfRenderNutricion() {
   } else if (data.coach) {
     html += '<div style="background:var(--ll);border-radius:9px;padding:.7rem .8rem;margin-bottom:.5rem">';
     html += '<div style="font-size:11px;font-weight:700;color:var(--mo);margin-bottom:3px">✅ Lo bueno de hoy</div>';
-    html += '<div style="font-size:12.5px;color:var(--tx);line-height:1.5">' + data.coach.bueno + '</div></div>';
+    html += '<div style="font-size:.92rem;color:var(--tx);line-height:1.55">' + data.coach.bueno + '</div></div>';
     html += '<div style="background:#FFF3E0;border-radius:9px;padding:.7rem .8rem;margin-bottom:.5rem">';
     html += '<div style="font-size:11px;font-weight:700;color:#9a5a00;margin-bottom:3px">⚠️ Lo que falta</div>';
-    html += '<div style="font-size:12.5px;color:var(--tx);line-height:1.5">' + data.coach.falto + '</div></div>';
+    html += '<div style="font-size:.92rem;color:var(--tx);line-height:1.55">' + data.coach.falto + '</div></div>';
     html += '<div style="background:var(--fo);border-radius:9px;padding:.7rem .8rem">';
     html += '<div style="font-size:11px;font-weight:700;color:#2E7D5B;margin-bottom:4px">💡 Consejos</div>';
-    (data.coach.consejos||[]).forEach(function(c){ html += '<div style="font-size:12.5px;color:var(--tx);line-height:1.6;margin-bottom:2px">• ' + c + '</div>'; });
+    (data.coach.consejos||[]).forEach(function(c){ html += '<div style="font-size:.92rem;color:var(--tx);line-height:1.6;margin-bottom:3px">• ' + c + '</div>'; });
     html += '</div><div style="font-size:10px;color:#bbb;text-align:right;margin-top:4px">Actualizado ' + (data.coachHora||'') + '</div>';
   } else {
     html += '<div style="font-size:11.5px;color:var(--su);margin-bottom:.6rem">La IA revisa tu día y tu historial reciente para darte consejos personalizados.</div>';
   }
   html += '<button class="btn bp" onclick="dfAnalizarDia()" style="margin-top:.6rem">' + (data.coach ? '🔄 Actualizar análisis' : '🤖 Analizar mi día') + '</button>';
+  html += '</div>';
+
+  // Chat libre con el Coach IA
+  html += '<div class="df-card"><h3>💬 Pregúntale al Coach</h3>';
+  html += '<div style="font-size:11px;color:var(--su);margin-bottom:.6rem">Pregunta lo que quieras: un ajuste, qué cenar, comparar dos opciones, etc.</div>';
+  var chat = data.chatCoach || [];
+  if (chat.length > 0) {
+    html += '<div style="max-height:340px;overflow-y:auto;margin-bottom:.6rem">';
+    chat.forEach(function(msg) {
+      if (msg.rol === 'usuaria') {
+        html += '<div style="background:var(--fo);border-radius:9px 9px 2px 9px;padding:.6rem .8rem;margin-bottom:.4rem;margin-left:12%;font-size:.92rem;color:var(--tx)">' + msg.texto + '</div>';
+      } else {
+        html += '<div style="background:var(--ll);border-radius:9px 9px 9px 2px;padding:.6rem .8rem;margin-bottom:.4rem;margin-right:6%;font-size:.92rem;color:var(--tx);line-height:1.55">🤖 ' + msg.texto + '</div>';
+      }
+    });
+    if (data.chatLoading) {
+      html += '<div class="df-loading"><div class="df-loading-dots"><span></span><span></span><span></span></div><span>Pensando...</span></div>';
+    }
+    html += '</div>';
+  }
+  html += '<div style="display:flex;gap:6px">';
+  html += '<input type="text" id="sf-chat-input" placeholder="Ej: ¿mejor cenar pollo o pescado hoy?" style="flex:1;padding:11px 14px;border:1.5px solid var(--lv);border-radius:9px;font-size:1rem;outline:none" onkeydown="if(event.key===\'Enter\'){event.preventDefault();dfPreguntarCoach();}">';
+  html += '<button class="btn bp" style="width:auto;padding:9px 16px;margin:0" onclick="dfPreguntarCoach()">➤</button></div>';
+  if (chat.length > 0) html += '<button class="btn bs" style="margin-top:.5rem;font-size:11px" onclick="dfLimpiarChat()">🗑️ Borrar conversación</button>';
   html += '</div>';
 
   return sfRenderComidas(html, comidas);
@@ -493,10 +520,10 @@ function sfRenderComidas(html, comidas) {
       } else {
         html += '<div style="font-size:.78rem;color:var(--tx)">' + m.desc + '</div>';
         html += '<div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap">';
-        html += '<span style="font-size:.6rem;background:#FFF3E0;color:#9a5a00;padding:1px 6px;border-radius:4px">' + m.kcal + ' kcal</span>';
-        html += '<span style="font-size:.6rem;background:rgba(192,57,43,.1);color:#C0392B;padding:1px 6px;border-radius:4px">' + m.pro + 'g P</span>';
-        html += '<span style="font-size:.6rem;background:rgba(46,125,91,.1);color:#2E7D5B;padding:1px 6px;border-radius:4px">' + m.car + 'g C</span>';
-        html += '<span style="font-size:.6rem;background:rgba(46,125,168,.1);color:#2E7DA8;padding:1px 6px;border-radius:4px">' + m.fat + 'g G</span>';
+        html += '<span style="font-size:.8rem;font-weight:600;background:#FFF3E0;color:#9a5a00;padding:2px 8px;border-radius:5px">' + m.kcal + ' kcal</span>';
+        html += '<span style="font-size:.8rem;font-weight:600;background:rgba(192,57,43,.1);color:#C0392B;padding:2px 8px;border-radius:5px">' + m.pro + 'g P</span>';
+        html += '<span style="font-size:.8rem;font-weight:600;background:rgba(46,125,91,.1);color:#2E7D5B;padding:2px 8px;border-radius:5px">' + m.car + 'g C</span>';
+        html += '<span style="font-size:.8rem;font-weight:600;background:rgba(46,125,168,.1);color:#2E7DA8;padding:2px 8px;border-radius:5px">' + m.fat + 'g G</span>';
         if (m.nota) html += '<span style="font-size:.6rem;color:#bbb">' + m.nota + '</span>';
         html += '</div>';
       }
@@ -763,6 +790,84 @@ async function dfAnalizarDia() {
     var freshData = dfGetData(); freshData.coachLoading = false; dfSaveData(freshData);
     dfToast('No se pudo analizar, intenta de nuevo');
   }
+  sfRenderTab();
+}
+
+// ── CHAT LIBRE CON EL COACH ──
+async function dfPreguntarCoach() {
+  var input = document.getElementById('sf-chat-input');
+  var pregunta = input ? input.value.trim() : '';
+  if (!pregunta) { input && input.focus(); return; }
+
+  var data = dfGetData();
+  if (!data.chatCoach) data.chatCoach = [];
+  data.chatCoach.push({ rol: 'usuaria', texto: pregunta });
+  data.chatLoading = true;
+  dfSaveData(data);
+  if (input) input.value = '';
+  sfRenderTab();
+
+  var comidas = data.comidas || [];
+  var totals = comidas.filter(function(m){return !m.loading && !m.pendiente;}).reduce(function(acc,m){
+    return {kcal:acc.kcal+(m.kcal||0),pro:acc.pro+(m.pro||0),car:acc.car+(m.car||0),fat:acc.fat+(m.fat||0)};
+  },{kcal:0,pro:0,car:0,fat:0});
+  var T = pfCalcularMetas();
+  var cal = pfCalcularCalorias();
+  var gastadas = Math.round((data.movimiento && data.movimiento.calGastadas) || 0);
+  var horaActual = new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+  var comidasHoyTexto = comidas.filter(function(m){return !m.loading && !m.pendiente;}).map(function(m){
+    return m.tiempo+': '+m.desc+' ('+Math.round(m.kcal)+'kcal, '+Math.round(m.pro)+'g prot)';
+  }).join('\n');
+
+  // Historial reciente para contexto de patrones
+  var todos = JSON.parse(localStorage.getItem('sf_dias_v1')||'{}');
+  var fechas = Object.keys(todos).filter(function(f){return f!==SF.fecha;}).sort().slice(-5);
+  var historialResumen = fechas.map(function(f){
+    var d = todos[f];
+    var cs = (d.comidas||[]).filter(function(m){return !m.loading && !m.pendiente;});
+    var descs = cs.map(function(m){return m.tiempo+': '+m.desc;}).join(' | ');
+    return f+': '+descs;
+  }).join('\n');
+
+  // Historial de la conversación (para que el coach recuerde lo hablado)
+  var historialChat = data.chatCoach.map(function(m){ return (m.rol==='usuaria'?'Ella: ':'Coach: ') + m.texto; }).join('\n');
+
+  var systemPrompt = 'Eres una coach nutricional y de entrenamiento cálida, cercana y directa, parte de la app Seguimiento Fénix. ' +
+    'Respondes preguntas puntuales de la usuaria sobre su alimentación o entrenamiento del día. ' +
+    'Sé breve (2-4 frases normalmente, más si comparas opciones), concreta y práctica. Sin tecnicismos innecesarios. En español.\n\n' +
+    'Son las ' + horaActual + ' de hoy.\n' +
+    'META DE HOY: ' + (cal.objetivo+gastadas) + ' kcal, ' + T.pro + 'g proteína, ' + T.car + 'g carbos, ' + T.fat + 'g grasa.\n' +
+    'LLEVA CONSUMIDO: ' + Math.round(totals.kcal) + ' kcal, ' + Math.round(totals.pro) + 'g proteína, ' + Math.round(totals.car) + 'g carbos, ' + Math.round(totals.fat) + 'g grasa.\n' +
+    'Ha gastado ' + gastadas + ' kcal en ejercicio hoy.\n' +
+    'Comidas de hoy:\n' + (comidasHoyTexto || '(ninguna aún)') + '\n\n' +
+    (historialResumen ? 'Comidas de días recientes (para contexto de lo que suele comer):\n' + historialResumen + '\n\n' : '') +
+    (historialChat.length > 0 ? 'Conversación hasta ahora:\n' + historialChat + '\n\n' : '') +
+    'Responde SOLO a la última pregunta de la usuaria, usando el contexto de arriba cuando sea relevante. Si compara dos alternativas, di cuál conviene más y por qué, en 1-2 frases claras.';
+
+  try {
+    var res = await fetch(WORKER_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+      model:'claude-haiku-4-5-20251001', max_tokens:350,
+      messages:[{ role:'user', content: systemPrompt + '\n\nPregunta: ' + pregunta }]
+    })});
+    var d = await res.json();
+    var respuesta = d.content && d.content[0] ? d.content[0].text.trim() : 'No pude responder, intenta de nuevo.';
+    var freshData = dfGetData();
+    if (!freshData.chatCoach) freshData.chatCoach = [];
+    freshData.chatCoach.push({ rol:'coach', texto: respuesta });
+    freshData.chatLoading = false;
+    dfSaveData(freshData);
+  } catch(e) {
+    var freshData = dfGetData();
+    if (!freshData.chatCoach) freshData.chatCoach = [];
+    freshData.chatCoach.push({ rol:'coach', texto:'No pude responder justo ahora, intenta de nuevo en un momento.' });
+    freshData.chatLoading = false;
+    dfSaveData(freshData);
+  }
+  sfRenderTab();
+}
+function dfLimpiarChat() {
+  if (!confirm('¿Borrar toda la conversación de hoy con el coach?')) return;
+  dfSaveData({ chatCoach: [] });
   sfRenderTab();
 }
 
