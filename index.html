@@ -152,6 +152,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--ll);color:var(--tx);min-h
 /* FOOTER */
 .ftr{text-align:center;padding:1rem;font-size:10px;color:var(--su)}
 
+/* RADIO FRUTO PRIORITARIO */
+.rd{display:flex;align-items:center;gap:10px;padding:10px 14px;background:white;border-radius:10px;border:1.5px solid var(--ln);cursor:pointer;transition:all .2s}
+.rd.sl{border-color:var(--mo);background:var(--lv)}
+.rdot{width:16px;height:16px;border-radius:50%;border:2px solid var(--ln);flex-shrink:0;transition:all .2s}
+.rd.sl .rdot{border-color:var(--mo);background:var(--mo)}
+.cm{display:flex;flex-direction:column;gap:6px}
+
 /* PRINT */
 @media print{
   body{background:white}
@@ -225,6 +232,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--ll);color:var(--tx);min-h
       <div class="sesion-label">Cuaderno de Trabajo</div>
       <div class="sesion-titulo">Mujer Fénix 40+</div>
       <div class="sesion-sub">Construir y sostener una vida que tenga sentido para ti.</div>
+    </div>
+    <div class="card" style="margin-bottom:1.2rem">
+      <div class="card-tit">¡Bienvenida a tu Cuaderno de Trabajo! 🔥</div>
+      <div class="card-txt">Este es tu espacio personal — un lugar para acompañar tu proceso semana a semana, sesión a sesión.<br><br>
+      Aquí encontrarás el <strong>contenido de cada sesión</strong>, los <strong>ejercicios para trabajar</strong> y un espacio para guardar tus reflexiones y respuestas.<br><br>
+      Tu cuaderno crece contigo. Cada semana se irá sumando una nueva sesión con nuevas herramientas.<br><br>
+      <em style="color:var(--su)">Recuerda: esto no es una tarea que tienes que completar perfectamente. Es un espacio para conocerte, recordarte y construir, a tu ritmo.</em></div>
     </div>
     <div class="sesiones-lista" id="lista-sesiones"></div>
   </div>
@@ -526,7 +540,8 @@ function entrar() {
 
 // ── SESIONES ──
 var SESIONES = [
-  { id: 's1', num: '1', titulo: 'Una nueva etapa comienza', desc: 'Recuerda quién eres', icono: '🌱', activa: true }
+  { id: 's1', num: '1', titulo: 'Una nueva etapa comienza', desc: 'Recuerda quién eres', icono: '🌱', activa: true },
+  { id: 's2', num: '2', titulo: 'Los frutos de la vida que quiero cultivar', desc: '¿Qué quiero para cada área de mi vida?', icono: '🌿', activa: true }
 ];
 
 function renderSesiones() {
@@ -537,7 +552,7 @@ function renderSesiones() {
     div.className = 'sesion-card' + (s.activa ? ' activa' : ' bloqueada');
     var badge = s.activa ? '<span class="sesion-badge sb-new">Disponible</span>' : '<span class="sesion-badge sb-lock">Próximamente</span>';
     div.innerHTML = '<div class="sesion-ico">' + s.icono + '</div><div class="sesion-info"><h3>Sesión ' + s.num + ': ' + s.titulo + '</h3><p>' + s.desc + '</p></div>' + badge;
-    if (s.activa) div.onclick = function() { show('s-s1-contexto'); };
+    if (s.activa) div.onclick = (function(sid) { return function() { show('s-' + sid + '-contexto'); }; })(s.id);
     lista.appendChild(div);
   });
 }
@@ -608,6 +623,223 @@ function verImprimible() {
 
 
 
+
+
+// ── ABECEDARIO DE LOS ELOGIOS ──
+function getAbcPlaceholder(l) {
+  var ejemplos = {A:'Apasionada, Amable, Auténtica',B:'Bondadosa, Bonita, Brillante',C:'Capaz, Creativa, Consciente',D:'Dedicada, Divertida, Decidida',E:'Empática, Esforzada, Especial',F:'Fuerte, Fiel, Feliz',G:'Generosa, Grandiosa, Genuina',H:'Habilosa, Honesta, Hermosa',I:'Inteligente, Imparable, Intuitiva',J:'Justa, Jovial, Joven de espíritu',K:'Kilométrica en bondad',L:'Leal, Libre, Luminosa',M:'Maravillosa, Motivada, Merecedora',N:'Natural, Noble, Necesaria',Ñ:'Ñoña en lo que amo',O:'Organizada, Optimista, Original',P:'Perseverante, Poderosa, Paciente',Q:'Querida, que logra lo que se propone',R:'Resiliente, Real, Radiante',S:'Suficiente, Sabia, Sensible',T:'Tierna, Tenaz, Talentosa',U:'Única, Útil, Valiente',V:'Valiosa, Valiente, Vibrante',W:'Wow en todo lo que hago',X:'eXtraordinaria',Y:'Yo soy todo lo que necesito',Z:'Zen, en paz conmigo misma'};
+  return ejemplos[l] || '';
+}
+
+function renderAbecedario() {
+  var container = document.getElementById('abecedario-form');
+  if (!container) return;
+  container.innerHTML = '';
+  var abc = D.s2 && D.s2.abecedario ? D.s2.abecedario : {};
+  var letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  letras.forEach(function(l) {
+    var div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;gap:8px;background:white;border-radius:10px;padding:10px 14px;border:1.5px solid var(--ln)';
+    div.innerHTML =
+      '<div style="font-family:Playfair Display,serif;color:var(--mo);font-size:14px;font-weight:600;flex-shrink:0;white-space:nowrap">Yo soy ' + l + '</div>' +
+      '<input type="text" id="abc-' + l + '" value="' + (abc[l]||'') + '" ' +
+      'placeholder="' + getAbcPlaceholder(l) + '" ' +
+      'style="flex:1;border:none;outline:none;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:transparent;border-bottom:1.5px solid var(--ln);padding-bottom:2px">';
+    container.appendChild(div);
+  });
+}
+
+function guardarAbecedario() {
+  if (!D.s2) D.s2 = {};
+  var abc = {};
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(function(l) {
+    var el = document.getElementById('abc-' + l);
+    if (el && el.value.trim()) abc[l] = el.value.trim();
+  });
+  D.s2.abecedario = abc;
+  guardarSB();
+  var btn = document.querySelector('#s-s2-abecedario .btn-p');
+  if (btn) { btn.textContent = '✓ Guardado'; setTimeout(function() { btn.textContent = 'Guardar mi abecedario ✦'; }, 2000); }
+}
+
+// ── SESIÓN 2: FRUTOS ──
+var FRUTOS_S2 = [
+  { key:'finanzas', letra:'F', titulo:'Finanzas', subtitulo:'En el dinero y la prosperidad', icon:'💰', color:'#4B0E6E',
+    ejemplos:[
+      'Quiero sentirme merecedora de ganar bien y vivir con abundancia.',
+      'Quiero pagar todas mis deudas y estar libre de compromisos financieros.',
+      'Quiero ahorrar $1.000.000 este año como fondo de emergencia.',
+      'Quiero ganar $3.000.000 mensuales con mi negocio o trabajo.',
+      'Quiero tener mis finanzas ordenadas, con presupuesto mensual.',
+      'Quiero invertir y hacer que mi dinero trabaje para mí.'
+    ],
+    pregunta:'¿Qué quieres en el dinero y la prosperidad?' },
+  { key:'relaciones', letra:'R', titulo:'Relaciones', subtitulo:'En el amor y en las relaciones', icon:'💗', color:'#8B1A4A',
+    ejemplos:[
+      'Quiero una relación donde me sientan y me vean de verdad.',
+      'Quiero tener 1 conversación profunda a la semana con alguien que me importe.',
+      'Quiero dejar de dar más de lo que recibo en mis relaciones.',
+      'Quiero poner un límite claro en una relación que me agota.',
+      'Quiero conectar más con mis hijos/pareja — al menos 1 hora de calidad al día.',
+      'Quiero construir amistades que me nutran y me inspiren.'
+    ],
+    pregunta:'¿Qué quieres en el amor y en tus relaciones?' },
+  { key:'talentos', letra:'U', titulo:'Uso de mis dones y talentos', subtitulo:'En lo que hago / a lo que me dedico', icon:'⭐', color:'#5C1A7A',
+    ejemplos:[
+      'Quiero trabajar en algo que me llene y sienta que importa.',
+      'Quiero lanzar mi proyecto / emprendimiento antes de fin de año.',
+      'Quiero dedicar 2 horas semanales a un hobby o actividad creativa.',
+      'Quiero aprender una habilidad nueva que siempre he querido desarrollar.',
+      'Quiero que mi trabajo refleje quién soy y lo que valoro.',
+      'Quiero generar ingresos haciendo algo que me apasione.'
+    ],
+    pregunta:'¿Qué quieres en lo que haces y a lo que te dedicas?' },
+  { key:'tranquilidad', letra:'T', titulo:'Tranquilidad y paz mental', subtitulo:'En cómo me trato a mí misma', icon:'🌸', color:'#7B1A5C',
+    ejemplos:[
+      'Quiero hablarme con amabilidad, como lo haría con una amiga.',
+      'Quiero tener una rutina de mañana de 20 min solo para mí.',
+      'Quiero meditar o hacer respiración 5 minutos al día.',
+      'Quiero dejar de criticarme cuando no cumplo lo que me propongo.',
+      'Quiero aprender a decir no sin sentir culpa.',
+      'Quiero terminar el día sintiendo que hice suficiente.'
+    ],
+    pregunta:'¿Qué quieres en tu paz mental y en cómo te tratas?' },
+  { key:'disfrute', letra:'O', titulo:'Ocio y disfrute', subtitulo:'En el placer, el descanso y la alegría', icon:'✨', color:'#8B4A00',
+    ejemplos:[
+      'Quiero tener 1 tarde a la semana completamente para mí, sin culpa.',
+      'Quiero hacer un viaje o escapada al menos 1 vez al año.',
+      'Quiero retomar una actividad que me alegraba y dejé de hacer.',
+      'Quiero leer 1 libro al mes por puro placer.',
+      'Quiero reírme más y buscar más momentos de alegría en mi día a día.',
+      'Quiero descansar de verdad los fines de semana, sin pendientes.'
+    ],
+    pregunta:'¿Qué quieres en tu disfrute, descanso y tiempo propio?' },
+  { key:'salud', letra:'S', titulo:'Salud', subtitulo:'En mi cuerpo y mi energía', icon:'💚', color:'#1A5C3A',
+    ejemplos:[
+      'Quiero sentirme liviana, con energía y vitalidad para vivir plenamente.',
+      'Quiero pesar X kilos y sentirme bien en mi cuerpo.',
+      'Quiero usar la talla X y que mi ropa me quede cómoda.',
+      'Quiero moverme al menos 3 veces a la semana haciendo algo que disfrute.',
+      'Quiero dormir 7-8 horas y despertar descansada.',
+      'Quiero comer de manera más consciente y nutritiva.'
+    ],
+    pregunta:'¿Qué quieres en tu cuerpo y tu energía?' }
+];
+
+function renderFrutosS2() {
+  var container = document.getElementById('frutos-s2-form');
+  if (!container) return;
+  container.innerHTML = '';
+  var s2 = D.s2 || {};
+  
+  FRUTOS_S2.forEach(function(f) {
+    var val = s2[f.key] || '';
+    var div = document.createElement('div');
+    div.style.cssText = 'background:white;border-radius:14px;padding:1.1rem;margin-bottom:.9rem;border:1px solid rgba(201,168,76,.15);box-shadow:0 2px 8px rgba(75,14,110,.05)';
+    
+    // Header
+    var hdr = document.createElement('div');
+    hdr.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:.7rem';
+    hdr.innerHTML = '<div style="width:38px;height:38px;border-radius:10px;background:' + f.color + ';display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">' + f.icon + '</div>' +
+      '<div><div style="font-family:Playfair Display,serif;color:var(--mo);font-size:13px;font-weight:600">' + f.letra + ' — ' + f.titulo + '</div>' +
+      '<div style="font-size:10px;color:var(--su);margin-top:1px">' + f.subtitulo + '</div></div>';
+    
+    // Pregunta
+    var preg = document.createElement('div');
+    preg.style.cssText = 'font-size:12px;font-weight:500;color:var(--tx);margin-bottom:4px';
+    preg.textContent = f.pregunta;
+    
+    // Ejemplos
+    var ejBox = document.createElement('div');
+    ejBox.style.cssText = 'background:var(--lv);border-radius:8px;padding:10px 14px;margin-bottom:10px';
+    var ejLabel = document.createElement('div');
+    ejLabel.style.cssText = 'font-size:10px;font-weight:600;color:var(--mo);letter-spacing:.5px;margin-bottom:8px';
+    ejLabel.textContent = 'EJEMPLOS PARA INSPIRARTE';
+    ejBox.appendChild(ejLabel);
+    f.ejemplos.forEach(function(e) {
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin-bottom:5px';
+      row.innerHTML = '<div style="width:5px;height:5px;border-radius:50%;background:var(--do);flex-shrink:0;margin-top:5px"></div>' +
+        '<div style="font-size:12px;color:var(--su);line-height:1.6;font-style:italic">' + e + '</div>';
+      ejBox.appendChild(row);
+    });
+    
+    // Textarea
+    var ta = document.createElement('textarea');
+    ta.id = 'f-s2-' + f.key; ta.rows = 4;
+    ta.placeholder = 'Escribe aquí tu respuesta...';
+    ta.style.cssText = 'width:100%;padding:10px 12px;border:1.5px solid var(--ln);border-radius:9px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;resize:none;line-height:1.8;min-height:100px';
+    ta.value = val;
+    
+    // Nota
+    var nota = document.createElement('div');
+    nota.style.cssText = 'background:var(--lv);border-radius:8px;padding:7px 12px;margin-top:7px;font-size:11px;color:var(--mo)';
+    nota.innerHTML = '<strong>Esta visión crece contigo</strong> — puedes volver y enriquecerla cuando quieras.';
+    
+    div.appendChild(hdr); div.appendChild(preg); div.appendChild(ejBox);
+    div.appendChild(ta); div.appendChild(nota);
+    container.appendChild(div);
+  });
+  
+  // Render radio fruto prioritario
+  renderFrutoPrioritario();
+}
+
+function renderFrutoPrioritario() {
+  var container = document.getElementById('frutos-radio');
+  if (!container) return;
+  container.innerHTML = '';
+  var s2 = D.s2 || {};
+  var selected = s2.prioritario || '';
+  
+  FRUTOS_S2.forEach(function(f) {
+    var d = document.createElement('div');
+    d.className = 'rd' + (selected === f.key ? ' sl' : '');
+    d.innerHTML = '<div class="rdot"></div><span>' + f.icon + '  ' + f.letra + ' — ' + f.titulo + '</span>';
+    d.onclick = function() {
+      container.querySelectorAll('.rd').forEach(function(r) { r.classList.remove('sl'); });
+      d.classList.add('sl');
+    };
+    container.appendChild(d);
+  });
+  
+  if (s2.prioritario_porque) {
+    var el = document.getElementById('f-prioritario-porque');
+    if (el) el.value = s2.prioritario_porque;
+  }
+}
+
+function guardarS2() {
+  if (!D.s2) D.s2 = {};
+  FRUTOS_S2.forEach(function(f) {
+    var el = document.getElementById('f-s2-' + f.key);
+    if (el) D.s2[f.key] = el.value;
+  });
+  var selRad = document.querySelector('#frutos-radio .rd.sl span');
+  if (selRad) {
+    var txt = selRad.textContent.trim();
+    FRUTOS_S2.forEach(function(f) {
+      if (txt.indexOf(f.titulo) >= 0) D.s2.prioritario = f.key;
+    });
+  }
+  var porque = document.getElementById('f-prioritario-porque');
+  if (porque) D.s2.prioritario_porque = porque.value;
+  guardarSB();
+  // Feedback
+  var btn = document.querySelector('#s-s2-ejercicio .btn-p');
+  if (btn) { btn.textContent = '✓ Guardado'; setTimeout(function() { btn.textContent = 'Guardar mi visión ✦'; }, 2000); }
+  // Mark s2 as done in sesiones
+  renderSesiones();
+}
+
+// Override show to init s2 screens
+var _origShow = show;
+show = function(id) {
+  _origShow(id);
+  if (id === 's-s2-ejercicio') renderFrutosS2();
+  if (id === 's-s2-abecedario') renderAbecedario();
+};
+
 // ── UTILIDADES ──
 function show(id) {
   document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
@@ -632,19 +864,112 @@ function show(id) {
 })();
 </script>
 
+
+<!-- ══ SESIÓN 2: CONTEXTO ══ -->
+<div class="screen" id="s-s2-contexto">
+  <div class="hdr">
+    <button class="bk" onclick="show('s-inicio')">←</button>
+    <div><div class="hdr-logo">Sesión 2</div><div class="hdr-sub">Los frutos de la vida que quiero cultivar</div></div>
+  </div>
+  <div class="cnt">
+    <div class="sesion-hero">
+      <span class="sesion-icon">🌿</span>
+      <div class="sesion-label">Sesión 2</div>
+      <div class="sesion-titulo">Los frutos de la vida<br>que quiero cultivar</div>
+      <div class="sesion-sub">Definir qué quieres — no qué deberías querer.</div>
+    </div>
+
     <div class="card">
-      <div class="card-tit">Desde quien ya eres, ¿qué vida quieres vivir?</div>
-      <div class="card-txt">No lo que "deberías" querer. No lo que se espera de ti. Lo que tú, genuinamente, quieres para cada área de tu vida.<br><br>No tiene que ser perfecto ni definitivo. Es un punto de partida — una declaración de intención que iremos profundizando semana a semana.</div>
+      <div class="card-tit">Del "Yo soy" al "Yo quiero"</div>
+      <div class="card-txt">En la sesión anterior recordaste quién eres. Hoy damos el siguiente paso: desde esa identidad, te invitamos a que visualices y definas la vida que refleje coherencia con quien ya eres.<br><br>
+      Este ejercicio no parte de una carencia — no significa que te falte algo. Es preguntarte: <strong>si realmente soy quien reconozco ser, ¿qué tendría que estar pasando en mi vida?</strong></div>
+    </div>
+
+    <div class="principio" style="text-align:left">
+      <div class="principio-label">La conexión entre el Yo soy y los Frutos</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.9);line-height:1.8;margin-top:.3rem">
+        Vuelve un momento a tu lista del "Yo soy".<br><br>
+        Por ejemplo: si reconoces que eres una mujer <strong style="color:var(--do)">creativa, capaz y perseverante</strong>... ¿cómo se reflejaría eso en tus finanzas? ¿Qué tendría que estar pasando en esa área que expresara quién ya eres?<br><br>
+        Esa es exactamente la pregunta que vamos a responder en cada FRUTO.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-tit">¿Por qué trabajar todas las áreas?</div>
+      <div class="card-txt">Muchas veces nos enfocamos en una sola área y sin querer descuidamos las demás. Los <strong>FRUTOS</strong> nos ayudan a tener una visión completa — no para trabajar todo a la vez, sino para saber qué queremos en cada faceta y poder elegir con consciencia dónde poner la energía.</div>
+    </div>
+
+    <button class="btn btn-p" onclick="show('s-s2-abecedario')">Primero: Ejercicio del Abecedario →</button>
+    <button class="btn btn-s" onclick="show('s-s2-ejercicio')" style="margin-top:.5rem">Ir directo al ejercicio FRUTOS</button>
+    <div class="ftr">Academia Mujer Fénix 40+</div>
+  </div>
+</div>
+
+<!-- ══ SESIÓN 2: ABECEDARIO ══ -->
+<div class="screen" id="s-s2-abecedario">
+  <div class="hdr">
+    <button class="bk" onclick="show('s-s2-contexto')">←</button>
+    <div><div class="hdr-logo">Ejercicio complementario</div><div class="hdr-sub">Abecedario de los elogios</div></div>
+  </div>
+  <div class="cnt">
+    <div class="ej-header">
+      <div class="ej-num">Ejercicio Complementario · Sesión 2</div>
+      <div class="ej-tit">Abecedario de los elogios</div>
+      <div class="ej-sub">Para seguir recordando quién eres</div>
+    </div>
+
+    <div class="card">
+      <div class="card-tit" style="color:var(--ro)">¿Para qué sirve este ejercicio?</div>
+      <div class="card-txt">Si te costó recordar quién eres en la sesión anterior, o simplemente quieres seguir profundizando en tu "Yo soy", este ejercicio es para ti.<br><br>
+      El abecedario te da un punto de partida — una letra a la vez — para descubrir más de lo que ya eres.<br><br>
+      <strong>Completa cada letra con todo lo que puedas.</strong> Usa toda la línea — puedes poner más de una cosa con cada letra.<br><br>
+      <em style="color:var(--su)">Ejemplo: <strong style="color:var(--mo)">Yo soy A</strong>pasionada, Auténtica, Amable... <strong style="color:var(--mo)">Yo soy B</strong>onita, Bondadosa... <strong style="color:var(--mo)">Yo soy C</strong>reativa, Capaz, Consciente...</em></div>
     </div>
 
     <div class="card-do">
-      <strong>Recuerda:</strong> lo que escribas aquí no te define ni te exige. Solo te orienta. Puedes volver y editarlo cuando quieras — esta visión también crece contigo.
+      ✨ <strong>Te invitamos a hacer este ejercicio también en tu vida cotidiana.</strong><br><br>
+      Mientras cocinas, mientras haces el aseo, mientras te duchas, mientras manejas... en esos momentos de piloto automático, en lugar de dejar que la mente divague, úsalos para recordar quién eres.<br><br>
+      <em>"Yo soy A de abundante. Yo soy B de bondadosa. Yo soy C de capaz..."</em><br><br>
+      Repite tu lista en voz alta o en silencio. Lo que se repite, se refuerza.
     </div>
 
-    <div id="frutos-form"></div>
+    <div id="abecedario-form" style="display:flex;flex-direction:column;gap:8px;margin:1rem 0"></div>
 
-    <button class="btn btn-p" onclick="guardarFrutos()" style="margin-top:1rem">Guardar mi visión ✦</button>
-    <button class="btn btn-s" onclick="show('s-s1-ejercicio')" style="margin-top:.5rem">← Volver al ejercicio anterior</button>
+    <button class="btn btn-p" onclick="guardarAbecedario()">Guardar mi abecedario ✦</button>
+    <button class="btn btn-s" onclick="show('s-s2-ejercicio')" style="margin-top:.5rem">Continuar al ejercicio FRUTOS →</button>
+    <div class="ftr">Academia Mujer Fénix 40+</div>
+  </div>
+</div>
+
+<!-- ══ SESIÓN 2: EJERCICIO ══ -->
+<div class="screen" id="s-s2-ejercicio">
+  <div class="hdr">
+    <button class="bk" onclick="show('s-s2-contexto')">←</button>
+    <div><div class="hdr-logo">Ejercicio 2</div><div class="hdr-sub">¿Qué vida quiero crear?</div></div>
+  </div>
+  <div class="cnt">
+    <div class="ej-header">
+      <div class="ej-num">Ejercicio 2 · Sesión 2</div>
+      <div class="ej-tit">¿Qué vida quiero crear?</div>
+      <div class="ej-sub">Define qué quieres para cada faceta de tu vida.<br><em>No lo que "deberías" querer. Lo que tú, genuinamente, quieres.</em></div>
+    </div>
+
+    <div id="frutos-s2-form"></div>
+
+    <div class="sep"></div>
+
+    <div class="card" id="fruto-prioritario-card">
+      <div class="card-tit" style="color:var(--ro)">🎯 Mi fruto prioritario</div>
+      <div class="card-txt" style="margin-bottom:.8rem">¿En cuál de estas áreas sientes que hoy necesitas poner más atención? Elige <strong>una</strong> — la que más resuene contigo ahora, no la que "debería" ser.</div>
+      <div id="frutos-radio" style="display:flex;flex-direction:column;gap:7px"></div>
+      <div class="cm" style="margin-top:1rem">
+        <label style="font-size:12px;font-weight:500">¿Por qué elegiste esta área?</label>
+        <textarea id="f-prioritario-porque" rows="2" placeholder="Ej: Porque es el área donde más incoherencia siento con quien soy..." style="width:100%;padding:10px 12px;border:1.5px solid var(--ln);border-radius:9px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;resize:none;min-height:70px"></textarea>
+      </div>
+    </div>
+
+    <button class="btn btn-p" onclick="guardarS2()">Guardar mi visión ✦</button>
+    <button class="btn btn-s" onclick="show('s-inicio')" style="margin-top:.5rem">← Volver al inicio</button>
     <div class="ftr">Academia Mujer Fénix 40+</div>
   </div>
 </div>
