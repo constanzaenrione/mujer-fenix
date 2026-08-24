@@ -441,7 +441,7 @@ var sb = null;
 function initSB() { try { sb = window.supabase.createClient(SURL, SKEY); return true; } catch(e) { return false; } }
 
 // ── ESTADO ──
-var D = { nombre: '', caracts: [] };
+var D = { nombre: '', caracts: [], s2: {} };
 var authMode = 'in';
 
 // ── AUTH ──
@@ -508,7 +508,8 @@ async function guardarSB() {
   try {
     var ud = await sb.auth.getUser();
     if (!ud.data || !ud.data.user) return;
-    await sb.from('fichas').upsert({ email: ud.data.user.email, data: D, updated_at: new Date().toISOString() }, { onConflict: 'email' });
+    var result = await sb.from('fichas').upsert({ email: ud.data.user.email, data: D, updated_at: new Date().toISOString() }, { onConflict: 'email' });
+    if (result.error) console.error('Supabase error:', result.error);
   } catch(e) { console.warn('Error guardando:', e); }
 }
 
@@ -521,9 +522,10 @@ async function cargarSB() {
     if (res.data && res.data.data) {
       D.nombre = res.data.data.nombre || '';
       D.caracts = res.data.data.caracts || [];
+      D.s2 = res.data.data.s2 || {};
     }
   } catch(e) {
-    try { var loc = localStorage.getItem('mf40_cuaderno'); if (loc) { var p = JSON.parse(loc); D.nombre = p.nombre||''; D.caracts = p.caracts||[]; } } catch(e2) {}
+    try { var loc = localStorage.getItem('mf40_cuaderno'); if (loc) { var p = JSON.parse(loc); D.nombre = p.nombre||''; D.caracts = p.caracts||[]; D.s2 = p.s2||{}; } } catch(e2) {}
   }
 }
 
