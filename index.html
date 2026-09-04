@@ -249,12 +249,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--ll);color:var(--tx);min-h
 <div class="screen" id="s-s1-contexto">
   <div class="hdr">
     <button class="bk" onclick="show('s-inicio')">←</button>
-    <div><div class="hdr-logo">Sesión 1</div><div class="hdr-sub">Una nueva etapa comienza</div></div>
+    <div><div class="hdr-logo">Cuaderno 1</div><div class="hdr-sub">Una nueva etapa comienza</div></div>
   </div>
   <div class="cnt">
     <div class="sesion-hero">
       <span class="sesion-icon">🌱</span>
-      <div class="sesion-label">Sesión 1</div>
+      <div class="sesion-label">Cuaderno 1</div>
       <div class="sesion-titulo">Una nueva etapa comienza</div>
       <div class="sesion-sub">Construir y sostener una vida que tenga sentido para ti.</div>
     </div>
@@ -309,11 +309,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--ll);color:var(--tx);min-h
 <div class="screen" id="s-s1-ejercicio">
   <div class="hdr">
     <button class="bk" onclick="show('s-s1-contexto')">←</button>
-    <div><div class="hdr-logo">Ejercicio 1</div><div class="hdr-sub">Recuerda quién eres</div></div>
+    <div><div class="hdr-logo">Cuaderno 1 · Ejercicio 1</div><div class="hdr-sub">Recuerda quién eres</div></div>
   </div>
   <div class="cnt">
     <div class="ej-header">
-      <div class="ej-num">Ejercicio 1 · Sesión 1</div>
+      <div class="ej-num">Ejercicio 1 · Cuaderno 1</div>
       <div class="ej-tit">Recuerda quién eres</div>
       <div class="ej-sub">Completa cada línea con una frase que empiece con "Soy...".<br><em>Escribe a mano o a máquina — deja espacio, esta lista es tuya para siempre.</em></div>
     </div>
@@ -441,7 +441,7 @@ var sb = null;
 function initSB() { try { sb = window.supabase.createClient(SURL, SKEY); return true; } catch(e) { return false; } }
 
 // ── ESTADO ──
-var D = { nombre: '', caracts: [], s2: {} };
+var D = { nombre: '', caracts: [], s2: {}, s3: {} };
 var authMode = 'in';
 
 // ── AUTH ──
@@ -523,9 +523,10 @@ async function cargarSB() {
       D.nombre = res.data.data.nombre || '';
       D.caracts = res.data.data.caracts || [];
       D.s2 = res.data.data.s2 || {};
+      D.s3 = res.data.data.s3 || {};
     }
   } catch(e) {
-    try { var loc = localStorage.getItem('mf40_cuaderno'); if (loc) { var p = JSON.parse(loc); D.nombre = p.nombre||''; D.caracts = p.caracts||[]; D.s2 = p.s2||{}; } } catch(e2) {}
+    try { var loc = localStorage.getItem('mf40_cuaderno'); if (loc) { var p = JSON.parse(loc); D.nombre = p.nombre||''; D.caracts = p.caracts||[]; D.s2 = p.s2||{}; D.s3 = p.s3||{}; } } catch(e2) {}
   }
 }
 
@@ -543,7 +544,8 @@ function entrar() {
 // ── SESIONES ──
 var SESIONES = [
   { id: 's1', num: '1', titulo: 'Una nueva etapa comienza', desc: 'Recuerda quién eres', icono: '🌱', activa: true },
-  { id: 's2', num: '2', titulo: 'Los frutos de la vida que quiero cultivar', desc: '¿Qué quiero para cada área de mi vida?', icono: '🌿', activa: true }
+  { id: 's2', num: '2', titulo: 'Los frutos de la vida que quiero cultivar', desc: '¿Qué quiero para cada área de mi vida?', icono: '🌿', activa: true },
+  { id: 's3', num: '3', titulo: 'Mi visión de vida', desc: 'Cómo se ve mi vida ya realizada — en presente', icono: '✨', activa: true }
 ];
 
 function renderSesiones() {
@@ -553,7 +555,7 @@ function renderSesiones() {
     var div = document.createElement('div');
     div.className = 'sesion-card' + (s.activa ? ' activa' : ' bloqueada');
     var badge = s.activa ? '<span class="sesion-badge sb-new">Disponible</span>' : '<span class="sesion-badge sb-lock">Próximamente</span>';
-    div.innerHTML = '<div class="sesion-ico">' + s.icono + '</div><div class="sesion-info"><h3>Sesión ' + s.num + ': ' + s.titulo + '</h3><p>' + s.desc + '</p></div>' + badge;
+    div.innerHTML = '<div class="sesion-ico">' + s.icono + '</div><div class="sesion-info"><h3>Cuaderno ' + s.num + ': ' + s.titulo + '</h3><p>' + s.desc + '</p></div>' + badge;
     if (s.activa) div.onclick = (function(sid) { return function() { show('s-' + sid + '-contexto'); }; })(s.id);
     lista.appendChild(div);
   });
@@ -840,7 +842,85 @@ show = function(id) {
   _origShow(id);
   if (id === 's-s2-ejercicio') renderFrutosS2();
   if (id === 's-s2-abecedario') renderAbecedario();
+  if (id === 's-s3-ejercicio') initS3();
 };
+
+
+// ── CUADERNO 3: VISIÓN DE VIDA ──
+async function generarVision() {
+  // Check frutos exist
+  var s2 = D.s2 || {};
+  var frutos = ['finanzas','relaciones','talentos','tranquilidad','disfrute','salud'];
+  var tieneData = frutos.some(function(k) { return s2[k] && s2[k].trim(); });
+
+  // Build context
+  var ctx = '';
+  var nombres = {finanzas:'Finanzas (dinero y prosperidad)',relaciones:'Relaciones (amor y vínculos)',talentos:'Uso de mis talentos (lo que hago)',tranquilidad:'Tranquilidad y paz mental',disfrute:'Ocio y disfrute',salud:'Salud y cuerpo'};
+  frutos.forEach(function(k) { if (s2[k] && s2[k].trim()) { ctx += nombres[k] + ': ' + s2[k].trim() + ' ||| '; } });
+
+  if (!ctx.trim()) {
+    ctx = 'La persona aún no ha completado sus frutos. Genera una visión de vida inspiradora y general basada en una mujer de 40+ que busca equilibrio, propósito, amor y bienestar.';
+  }
+
+  // Show loading
+  document.getElementById('s3-loading').style.display = 'block';
+  document.getElementById('s3-ia-section').style.display = 'none';
+  document.getElementById('s3-vision-section').style.display = 'none';
+
+  var sys = 'Eres una escritora experta en visiones de vida y desarrollo personal para mujeres de 40+. Tu tarea es crear un texto de visión de vida en primera persona, tiempo presente, fluido y emotivo. Reglas: 1) Escríbelo como un texto corrido de 4-6 párrafos, no como lista. 2) Todo en presente ("tengo", "soy", "vivo", "disfruto"). 3) Integra todas las áreas sin repetir ideas similares. 4) Que suene natural, personal y emocionante — como si la persona ya estuviera viviendo esa vida. 5) Empieza directamente con el texto, sin introducción. 6) Cierra con una frase de gratitud o plenitud. 7) Solo español, con tildes.';
+
+  var usr = 'Basandote en estas respuestas de los 6 frutos de su vida, crea su vision de vida en texto corrido, primera persona, tiempo presente: ' + ctx + ' Crea un texto fluido que integre todo esto como si ya fuera su realidad vivida.';
+
+  try {
+    var res = await fetch('https://mujerfenix.conyenrione.workers.dev/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1200, system: sys, messages: [{ role: 'user', content: usr }] })
+    });
+    var data = await res.json();
+    var txt = data.content && data.content[0] ? data.content[0].text : '';
+    if (!txt) throw new Error('Sin respuesta');
+
+    // Show result
+    document.getElementById('s3-loading').style.display = 'none';
+    document.getElementById('s3-vision-section').style.display = 'block';
+    var ta = document.getElementById('s3-vision-text');
+    ta.value = txt;
+    // Save to D if we already had one
+    if (!D.s3) D.s3 = {};
+    D.s3.vision_ia = txt;
+    if (!D.s3.vision) D.s3.vision = txt; // pre-fill editable
+
+  } catch(e) {
+    document.getElementById('s3-loading').style.display = 'none';
+    document.getElementById('s3-ia-section').style.display = 'block';
+    alert('Hubo un error al generar la visión. Verifica tu conexión e intenta de nuevo.');
+    console.error(e);
+  }
+}
+
+function guardarVision() {
+  if (!D.s3) D.s3 = {};
+  var ta = document.getElementById('s3-vision-text');
+  if (ta) D.s3.vision = ta.value;
+  guardarSB();
+  var btn = document.querySelector('#s-s3-ejercicio .btn-p');
+  if (btn) { btn.textContent = '✓ Guardada'; setTimeout(function() { btn.textContent = 'Guardar mi visión ✦'; }, 2000); }
+}
+
+function initS3() {
+  // Restore saved vision if exists
+  if (D.s3 && D.s3.vision) {
+    document.getElementById('s3-loading').style.display = 'none';
+    document.getElementById('s3-ia-section').style.display = 'none';
+    document.getElementById('s3-vision-section').style.display = 'block';
+    var ta = document.getElementById('s3-vision-text');
+    if (ta) ta.value = D.s3.vision;
+  } else {
+    document.getElementById('s3-ia-section').style.display = 'block';
+    document.getElementById('s3-vision-section').style.display = 'none';
+  }
+}
 
 // ── UTILIDADES ──
 function show(id) {
@@ -871,12 +951,12 @@ function show(id) {
 <div class="screen" id="s-s2-contexto">
   <div class="hdr">
     <button class="bk" onclick="show('s-inicio')">←</button>
-    <div><div class="hdr-logo">Sesión 2</div><div class="hdr-sub">Los frutos de la vida que quiero cultivar</div></div>
+    <div><div class="hdr-logo">Cuaderno 2</div><div class="hdr-sub">Los frutos de la vida que quiero cultivar</div></div>
   </div>
   <div class="cnt">
     <div class="sesion-hero">
       <span class="sesion-icon">🌿</span>
-      <div class="sesion-label">Sesión 2</div>
+      <div class="sesion-label">Cuaderno 2</div>
       <div class="sesion-titulo">Los frutos de la vida<br>que quiero cultivar</div>
       <div class="sesion-sub">Definir qué quieres — no qué deberías querer.</div>
     </div>
@@ -912,11 +992,11 @@ function show(id) {
 <div class="screen" id="s-s2-abecedario">
   <div class="hdr">
     <button class="bk" onclick="show('s-s2-contexto')">←</button>
-    <div><div class="hdr-logo">Ejercicio complementario</div><div class="hdr-sub">Abecedario de los elogios</div></div>
+    <div><div class="hdr-logo">Cuaderno 2 · Complementario</div><div class="hdr-sub">Abecedario de los elogios</div></div>
   </div>
   <div class="cnt">
     <div class="ej-header">
-      <div class="ej-num">Ejercicio Complementario · Sesión 2</div>
+      <div class="ej-num">Complementario · Cuaderno 2</div>
       <div class="ej-tit">Abecedario de los elogios</div>
       <div class="ej-sub">Para seguir recordando quién eres</div>
     </div>
@@ -948,11 +1028,11 @@ function show(id) {
 <div class="screen" id="s-s2-ejercicio">
   <div class="hdr">
     <button class="bk" onclick="show('s-s2-contexto')">←</button>
-    <div><div class="hdr-logo">Ejercicio 2</div><div class="hdr-sub">¿Qué vida quiero crear?</div></div>
+    <div><div class="hdr-logo">Cuaderno 2 · Ejercicio</div><div class="hdr-sub">¿Qué vida quiero crear?</div></div>
   </div>
   <div class="cnt">
     <div class="ej-header">
-      <div class="ej-num">Ejercicio 2 · Sesión 2</div>
+      <div class="ej-num">Ejercicio 2 · Cuaderno 2</div>
       <div class="ej-tit">¿Qué vida quiero crear?</div>
       <div class="ej-sub">Define qué quieres para cada faceta de tu vida.<br><em>No lo que "deberías" querer. Lo que tú, genuinamente, quieres.</em></div>
     </div>
@@ -972,6 +1052,88 @@ function show(id) {
     </div>
 
     <button class="btn btn-p" onclick="guardarS2()">Guardar mi visión ✦</button>
+    <button class="btn btn-s" onclick="show('s-inicio')" style="margin-top:.5rem">← Volver al inicio</button>
+    <div class="ftr">Academia Mujer Fénix 40+</div>
+  </div>
+</div>
+
+
+<!-- ══ CUADERNO 3: CONTEXTO ══ -->
+<div class="screen" id="s-s3-contexto">
+  <div class="hdr">
+    <button class="bk" onclick="show('s-inicio')">←</button>
+    <div><div class="hdr-logo">Cuaderno 3</div><div class="hdr-sub">Mi visión de vida</div></div>
+  </div>
+  <div class="cnt">
+    <div class="sesion-hero">
+      <span class="sesion-icon">✨</span>
+      <div class="sesion-label">Cuaderno 3</div>
+      <div class="sesion-titulo">Mi visión de vida</div>
+      <div class="sesion-sub">Cómo se ve mi vida ya realizada — escrita en presente.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-tit">¿Qué es la visión de vida?</div>
+      <div class="card-txt">En los cuadernos anteriores recordaste quién eres y definiste qué quieres en cada área de tu vida. Ahora vamos a integrar todo eso en algo poderoso: <strong>una visión de vida escrita en tiempo presente</strong>, como si ya estuviera vivida.<br><br>
+      No es una lista de metas. Es un texto fluido que describe cómo se ve tu vida cuando todo lo que definiste ya está ocurriendo — tu realidad futura, narrada desde dentro.</div>
+    </div>
+
+    <div class="principio" style="text-align:left">
+      <div class="principio-label">¿Por qué en tiempo presente?</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.9);line-height:1.85;margin-top:.3rem">
+        El cerebro no distingue bien entre lo que imagina vívidamente y lo que ya vive. Cuando escribes <em style="color:var(--do)">"tengo una vida tranquila, me levanto sin apuro, amo lo que hago"</em> — no <em>"quiero tener"</em> — activas algo diferente.<br><br>
+        Es una declaración de identidad. No de deseo.
+      </div>
+    </div>
+
+    <div class="card-do">
+      <strong>Ejemplo de visión de vida:</strong><br><br>
+      <em>"Tengo una vida tranquila y relajada. Me levanto sin apuro. Tomo desayuno en familia relajada. Empiezo a trabajar a las 10am en lo que me apasiona — amo lo que hago. Tengo dinero suficiente que me permite viajar varias veces al año y disfrutar en familia. Comparto con mi mamá y hermana una vez a la semana. Tengo una relación increíble donde los fines de semana descanso. Hago deporte, como saludable y tengo un cuerpo hermoso. Me siento profundamente agradecida de la increíble vida que tengo."</em>
+    </div>
+
+    <button class="btn btn-p" onclick="show('s-s3-ejercicio')">Crear mi visión de vida →</button>
+    <div class="ftr">Academia Mujer Fénix 40+</div>
+  </div>
+</div>
+
+<!-- ══ CUADERNO 3: EJERCICIO ══ -->
+<div class="screen" id="s-s3-ejercicio">
+  <div class="hdr">
+    <button class="bk" onclick="show('s-s3-contexto')">←</button>
+    <div><div class="hdr-logo">Cuaderno 3</div><div class="hdr-sub">Mi visión de vida</div></div>
+  </div>
+  <div class="cnt">
+    <div class="ej-header">
+      <div class="ej-num">Ejercicio 3 · Cuaderno 3</div>
+      <div class="ej-tit">Mi visión de vida</div>
+      <div class="ej-sub">Escrita en presente, como si ya estuviera vivida.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-tit" style="color:var(--ro)">¿Cómo funciona?</div>
+      <div class="card-txt">La IA va a leer tus respuestas de los 6 FRUTOS y construirá una primera versión de tu visión de vida — un texto corrido, en presente, que integra todo lo que definiste sin repeticiones.<br><br>
+      Luego tú puedes editarla, personalizarla y hacerla completamente tuya. <strong>La visión final la escribes tú.</strong></div>
+    </div>
+
+    <div id="s3-ia-section">
+      <button class="btn btn-p" onclick="generarVision()" id="btn-generar">✦ Generar mi visión con IA</button>
+    </div>
+
+    <div id="s3-loading" style="display:none;text-align:center;padding:2rem;color:var(--su)">
+      <div style="font-size:32px;margin-bottom:.8rem">✨</div>
+      <div style="font-size:14px">Creando tu visión de vida...<br><em style="font-size:12px">Leyendo tus frutos e integrando tu mundo.</em></div>
+    </div>
+
+    <div id="s3-vision-section" style="display:none;margin-top:1rem">
+      <div class="card">
+        <div class="card-tit" style="color:var(--mo)">✦ Tu visión de vida</div>
+        <div class="card-txt" style="font-size:12px;color:var(--su);margin-bottom:.8rem">Edítala, personalízala, hazla completamente tuya. Escribe en primera persona y en presente.</div>
+        <textarea id="s3-vision-text" rows="14" style="width:100%;padding:12px;border:1.5px solid var(--ln);border-radius:10px;font-family:Playfair Display,serif;font-size:14px;color:var(--tx);background:var(--ll);outline:none;resize:none;line-height:1.9;min-height:280px"></textarea>
+      </div>
+      <button class="btn btn-p" onclick="guardarVision()">Guardar mi visión ✦</button>
+      <button class="btn btn-s" onclick="generarVision()" style="margin-top:.5rem">↺ Regenerar con IA</button>
+    </div>
+
     <button class="btn btn-s" onclick="show('s-inicio')" style="margin-top:.5rem">← Volver al inicio</button>
     <div class="ftr">Academia Mujer Fénix 40+</div>
   </div>
