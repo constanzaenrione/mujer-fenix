@@ -171,6 +171,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ll);color:var(--tx);min-h
 </style>
 </head>
 <body>
+<div id="estado-guardado" style="position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:999;padding:7px 16px;border-radius:20px;color:white;font-size:11.5px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.15)"></div>
 
 <!-- ══ AUTH ══ -->
 <div class="screen active" id="s-auth">
@@ -504,13 +505,42 @@ function guardarLocal() { try { localStorage.setItem('mf40_cuaderno', JSON.strin
 
 async function guardarSB() {
   guardarLocal();
-  if (!sb) return;
+  mostrarEstadoGuardado('guardando');
+  if (!sb) { mostrarEstadoGuardado('local'); return; }
   try {
     var ud = await sb.auth.getUser();
-    if (!ud.data || !ud.data.user) return;
+    if (!ud.data || !ud.data.user) { mostrarEstadoGuardado('error'); return; }
     var result = await sb.from('fichas').upsert({ email: ud.data.user.email, data: D, updated_at: new Date().toISOString() }, { onConflict: 'email' });
-    if (result.error) console.error('Supabase error:', result.error);
-  } catch(e) { console.warn('Error guardando:', e); }
+    if (result.error) { console.error('Supabase error:', result.error); mostrarEstadoGuardado('error'); return; }
+    mostrarEstadoGuardado('ok');
+  } catch(e) { console.warn('Error guardando:', e); mostrarEstadoGuardado('error'); }
+}
+
+var _estadoGuardadoTimeout = null;
+function mostrarEstadoGuardado(estado) {
+  var el = document.getElementById('estado-guardado');
+  if (!el) return;
+  clearTimeout(_estadoGuardadoTimeout);
+  if (estado === 'guardando') {
+    el.textContent = 'Guardando...'; el.style.background = 'var(--su)'; el.style.opacity = '1';
+  } else if (estado === 'ok') {
+    el.textContent = '✓ Guardado'; el.style.background = 'var(--mo)'; el.style.opacity = '1';
+    _estadoGuardadoTimeout = setTimeout(function() { el.style.opacity = '0'; }, 1800);
+  } else if (estado === 'local') {
+    el.textContent = '✓ Guardado en este dispositivo'; el.style.background = 'var(--su)'; el.style.opacity = '1';
+    _estadoGuardadoTimeout = setTimeout(function() { el.style.opacity = '0'; }, 1800);
+  } else if (estado === 'error') {
+    el.textContent = '⚠ No se pudo guardar — revisa tu conexión'; el.style.background = '#B2495B'; el.style.opacity = '1';
+  }
+}
+
+function debounce(fn, ms) {
+  var t;
+  return function() {
+    var args = arguments, ctx = this;
+    clearTimeout(t);
+    t = setTimeout(function() { fn.apply(ctx, args); }, ms);
+  };
 }
 
 async function cargarSB() {
@@ -524,9 +554,10 @@ async function cargarSB() {
       D.caracts = res.data.data.caracts || [];
       D.s2 = res.data.data.s2 || {};
       D.s3 = res.data.data.s3 || {};
+      D.s4 = res.data.data.s4 || {};
     }
   } catch(e) {
-    try { var loc = localStorage.getItem('mf40_cuaderno'); if (loc) { var p = JSON.parse(loc); D.nombre = p.nombre||''; D.caracts = p.caracts||[]; D.s2 = p.s2||{}; D.s3 = p.s3||{}; } } catch(e2) {}
+    try { var loc = localStorage.getItem('mf40_cuaderno'); if (loc) { var p = JSON.parse(loc); D.nombre = p.nombre||''; D.caracts = p.caracts||[]; D.s2 = p.s2||{}; D.s3 = p.s3||{}; D.s4 = p.s4||{}; } } catch(e2) {}
   }
 }
 
@@ -545,7 +576,8 @@ function entrar() {
 var SESIONES = [
   { id: 's1', num: '1', titulo: 'Una nueva etapa comienza', desc: 'Recuerda quién eres', icono: '🌱', activa: true },
   { id: 's2', num: '2', titulo: 'Los frutos de la vida que quiero cultivar', desc: '¿Qué quiero para cada área de mi vida?', icono: '🌿', activa: true },
-  { id: 's3', num: '3', titulo: 'Mi visión de vida', desc: 'Cómo se ve mi vida ya realizada — en presente', icono: '✨', activa: true }
+  { id: 's3', num: '3', titulo: 'Mi visión de vida', desc: 'Cómo se ve mi vida ya realizada — en presente', icono: '✨', activa: true },
+  { id: 's4', num: '4', titulo: 'Metas que sostienen cada fruto', desc: 'De cada deseo, una meta concreta', icono: '🎯', activa: true }
 ];
 
 function renderSesiones() {
@@ -647,7 +679,7 @@ function renderAbecedario() {
     div.innerHTML =
       '<div style="font-family:Playfair Display,serif;color:var(--mo);font-size:14px;font-weight:600;flex-shrink:0;white-space:nowrap">Yo soy ' + l + '</div>' +
       '<input type="text" id="abc-' + l + '" value="' + (abc[l]||'') + '" ' +
-      'placeholder="' + getAbcPlaceholder(l) + '" ' +
+      'placeholder="' + getAbcPlaceholder(l) + '" oninput="guardarAbecedarioDebounced()" ' +
       'style="flex:1;border:none;outline:none;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:transparent;border-bottom:1.5px solid var(--ln);padding-bottom:2px">';
     container.appendChild(div);
   });
@@ -665,6 +697,7 @@ function guardarAbecedario() {
   var btn = document.querySelector('#s-s2-abecedario .btn-p');
   if (btn) { btn.textContent = '✓ Guardado'; setTimeout(function() { btn.textContent = 'Guardar mi abecedario ✦'; }, 2000); }
 }
+var guardarAbecedarioDebounced = debounce(guardarAbecedario, 1200);
 
 // ── SESIÓN 2: FRUTOS ──
 var FRUTOS_S2 = [
@@ -774,6 +807,7 @@ function renderFrutosS2() {
     ta.placeholder = 'Escribe aquí tu respuesta...';
     ta.style.cssText = 'width:100%;padding:10px 12px;border:1.5px solid var(--ln);border-radius:9px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;resize:none;line-height:1.8;min-height:100px';
     ta.value = val;
+    ta.oninput = debounce(guardarS2, 1200);
     
     // Nota
     var nota = document.createElement('div');
@@ -843,7 +877,177 @@ show = function(id) {
   if (id === 's-s2-ejercicio') renderFrutosS2();
   if (id === 's-s2-abecedario') renderAbecedario();
   if (id === 's-s3-ejercicio') initS3();
+  if (id === 's-s4-ejercicio') renderListaS4();
 };
+
+// ── CUADERNO 4: METAS SMART POR FRUTO (guiadas por IA, tono sutil) ──
+var S4_NOMBRES = {
+  finanzas: 'Finanzas (dinero y prosperidad)',
+  relaciones: 'Relaciones (amor y vínculos)',
+  talentos: 'Uso de mis talentos (lo que hago)',
+  tranquilidad: 'Tranquilidad y paz mental',
+  disfrute: 'Ocio y disfrute',
+  salud: 'Salud y cuerpo'
+};
+var s4FrutoActual = null;
+var s4Conversacion = [];
+var s4Cerrada = false;
+
+function renderListaS4() {
+  var cont = document.getElementById('s4-frutos-lista');
+  if (!cont) return;
+  cont.innerHTML = '';
+  var s4 = D.s4 || {};
+  FRUTOS_S2.forEach(function(f) {
+    var meta = s4[f.key];
+    var estado = meta && meta.meta ? '✓ Lista' : (meta && meta.conversacion && meta.conversacion.length ? 'En proceso' : 'Pendiente');
+    var color = meta && meta.meta ? 'var(--mo)' : (estado === 'En proceso' ? 'var(--do)' : 'var(--su)');
+    var div = document.createElement('div');
+    div.className = 'sesion-card activa';
+    div.innerHTML = '<div class="sesion-ico" style="background:' + f.color + '">' + f.icon + '</div>' +
+      '<div class="sesion-info"><h3>' + f.letra + ' — ' + f.titulo + '</h3>' +
+      '<p style="color:' + color + '">' + estado + (meta && meta.meta ? ': ' + meta.meta : '') + '</p></div>';
+    div.onclick = (function(key) { return function() { abrirFrutoS4(key); }; })(f.key);
+    cont.appendChild(div);
+  });
+}
+
+function abrirFrutoS4(key) {
+  s4FrutoActual = key;
+  var f = FRUTOS_S2.filter(function(x) { return x.key === key; })[0];
+  document.getElementById('s4-chat-titulo').textContent = 'Cuaderno 4 · ' + f.letra;
+  document.getElementById('s4-chat-sub').textContent = f.titulo;
+
+  var existente = (D.s4 || {})[key];
+  if (existente && existente.meta) {
+    // Ya tiene meta guardada: mostrarla directo, editable
+    s4Conversacion = existente.conversacion || [];
+    pintarMensajesS4();
+    mostrarFinalS4(existente.meta, existente.accion);
+  } else if (existente && existente.conversacion && existente.conversacion.length) {
+    // Conversación empezada pero sin cerrar: continuarla
+    s4Conversacion = existente.conversacion;
+    s4Cerrada = false;
+    pintarMensajesS4();
+    document.getElementById('s4-chat-final').style.display = 'none';
+    document.getElementById('s4-chat-input-wrap').style.display = 'block';
+  } else {
+    // Empezar de cero
+    s4Conversacion = [];
+    s4Cerrada = false;
+    document.getElementById('s4-chat-mensajes').innerHTML = '';
+    document.getElementById('s4-chat-final').style.display = 'none';
+    document.getElementById('s4-chat-input-wrap').style.display = 'none';
+    var s2texto = (D.s2 && D.s2[key]) ? D.s2[key].trim() : '';
+    llamarIAs4(s2texto ?
+      'Esto fue lo que escribí en este área: "' + s2texto + '". Ayúdame a aterrizarlo.' :
+      'Todavía no he pensado bien en esta área. Ayúdame a explorar qué podría querer aquí.');
+  }
+  show('s-s4-chat');
+}
+
+function pintarMensajesS4() {
+  var cont = document.getElementById('s4-chat-mensajes');
+  cont.innerHTML = '';
+  s4Conversacion.forEach(function(m) {
+    var burbuja = document.createElement('div');
+    var esIA = m.role === 'assistant';
+    burbuja.style.cssText = 'max-width:85%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.6;' +
+      (esIA ? 'align-self:flex-start;background:var(--lv);color:var(--tx);border-bottom-left-radius:4px;'
+            : 'align-self:flex-end;background:var(--mo);color:white;border-bottom-right-radius:4px;');
+    burbuja.textContent = m.content;
+    cont.appendChild(burbuja);
+  });
+}
+
+async function llamarIAs4(mensajeUsuario) {
+  if (mensajeUsuario) s4Conversacion.push({ role: 'user', content: mensajeUsuario });
+  pintarMensajesS4();
+  document.getElementById('s4-chat-input-wrap').style.display = 'none';
+  document.getElementById('s4-chat-loading').style.display = 'block';
+
+  var f = FRUTOS_S2.filter(function(x) { return x.key === s4FrutoActual; })[0];
+  var sys = 'Eres una guía cálida, cercana y perceptiva para mujeres de 40+ (Academia Mujer Fénix). Tu tarea es ayudar a una persona a aterrizar un deseo general del área de "' + S4_NOMBRES[s4FrutoActual] + '" en algo concreto y observable, a partir de una conversación breve. ' +
+    'Reglas: 1) Nunca menciones palabras como "específico", "medible", "SMART" ni nombres de metodologías — la conversación debe sentirse natural y curiosa, nunca un formulario. 2) Haz UNA pregunta breve y cálida a la vez, que profundice en lo que ya dijo, ayudándola a aterrizar su deseo en algo que pueda observar en su vida cotidiana (una frecuencia, un número, una acción clara). 3) Si la persona ya te dio algo concreto y observable, no sigas preguntando — cierra ahí, no fuerces más vueltas. 4) Máximo 3 preguntas en total; si llegas a la tercera, cierra con lo que tengas aunque no sea perfecto. ' +
+    'Responde ÚNICAMENTE con un objeto JSON, sin texto adicional ni backticks: si necesitas seguir profundizando, {"tipo":"pregunta","texto":"tu pregunta breve y cálida"}; si ya tienes suficiente claridad, {"tipo":"lista","meta":"la meta ya redactada en una frase clara, en primera persona","accion":"la acción concreta y recurrente que la sostiene, ej: una tarde libre a la semana"}.';
+
+  try {
+    var res = await fetch('https://mujerfenix.conyenrione.workers.dev/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 400,
+        system: sys,
+        messages: s4Conversacion.map(function(m) { return { role: m.role, content: m.content }; })
+      })
+    });
+    var data = await res.json();
+    var raw = data.content && data.content[0] ? data.content[0].text : '';
+    var clean = raw.replace(/```json|```/g, '').trim();
+    var parsed = JSON.parse(clean);
+
+    document.getElementById('s4-chat-loading').style.display = 'none';
+
+    if (parsed.tipo === 'lista') {
+      s4Conversacion.push({ role: 'assistant', content: parsed.meta });
+      pintarMensajesS4();
+      mostrarFinalS4(parsed.meta, parsed.accion);
+    } else {
+      s4Conversacion.push({ role: 'assistant', content: parsed.texto });
+      pintarMensajesS4();
+      document.getElementById('s4-chat-input-wrap').style.display = 'block';
+      document.getElementById('s4-chat-input').value = '';
+      document.getElementById('s4-chat-input').focus();
+    }
+    // Guardar progreso de la conversación aunque no esté cerrada
+    if (!D.s4) D.s4 = {};
+    if (!D.s4[s4FrutoActual]) D.s4[s4FrutoActual] = {};
+    D.s4[s4FrutoActual].conversacion = s4Conversacion;
+    guardarSB();
+
+  } catch (e) {
+    document.getElementById('s4-chat-loading').style.display = 'none';
+    document.getElementById('s4-chat-input-wrap').style.display = 'block';
+    alert('Hubo un error de conexión. Intenta escribir de nuevo.');
+    console.error(e);
+  }
+}
+
+function enviarMensajeS4() {
+  var ta = document.getElementById('s4-chat-input');
+  var texto = ta.value.trim();
+  if (!texto) return;
+  llamarIAs4(texto);
+}
+
+function mostrarFinalS4(meta, accion) {
+  document.getElementById('s4-chat-input-wrap').style.display = 'none';
+  document.getElementById('s4-chat-final').style.display = 'block';
+  document.getElementById('s4-meta-texto').value = meta || '';
+  document.getElementById('s4-accion-texto').value = accion || '';
+}
+
+function reiniciarChatS4() {
+  document.getElementById('s4-chat-final').style.display = 'none';
+  document.getElementById('s4-chat-input-wrap').style.display = 'block';
+  document.getElementById('s4-chat-input').focus();
+}
+
+function confirmarMetaS4() {
+  guardarMetaS4Silencioso();
+  show('s-s4-ejercicio');
+}
+function guardarMetaS4Silencioso() {
+  if (!s4FrutoActual) return;
+  if (!D.s4) D.s4 = {};
+  if (!D.s4[s4FrutoActual]) D.s4[s4FrutoActual] = {};
+  D.s4[s4FrutoActual].meta = document.getElementById('s4-meta-texto').value.trim();
+  D.s4[s4FrutoActual].accion = document.getElementById('s4-accion-texto').value.trim();
+  D.s4[s4FrutoActual].conversacion = s4Conversacion;
+  guardarSB();
+}
+var guardarMetaS4Debounced = debounce(guardarMetaS4Silencioso, 1200);
 
 
 // ── CUADERNO 3: VISIÓN DE VIDA ──
@@ -907,6 +1111,7 @@ function guardarVision() {
   var btn = document.querySelector('#s-s3-ejercicio .btn-p');
   if (btn) { btn.textContent = '✓ Guardada'; setTimeout(function() { btn.textContent = 'Guardar mi visión ✦'; }, 2000); }
 }
+var guardarVisionDebounced = debounce(guardarVision, 1200);
 
 function initS3() {
   // Restore saved vision if exists
@@ -1128,13 +1333,100 @@ function show(id) {
       <div class="card">
         <div class="card-tit" style="color:var(--mo)">✦ Tu visión de vida</div>
         <div class="card-txt" style="font-size:12px;color:var(--su);margin-bottom:.8rem">Edítala, personalízala, hazla completamente tuya. Escribe en primera persona y en presente.</div>
-        <textarea id="s3-vision-text" rows="14" style="width:100%;padding:12px;border:1.5px solid var(--ln);border-radius:10px;font-family:Playfair Display,serif;font-size:14px;color:var(--tx);background:var(--ll);outline:none;resize:none;line-height:1.9;min-height:280px"></textarea>
+        <textarea id="s3-vision-text" rows="14" oninput="guardarVisionDebounced()" style="width:100%;padding:12px;border:1.5px solid var(--ln);border-radius:10px;font-family:Playfair Display,serif;font-size:14px;color:var(--tx);background:var(--ll);outline:none;resize:none;line-height:1.9;min-height:280px"></textarea>
       </div>
       <button class="btn btn-p" onclick="guardarVision()">Guardar mi visión ✦</button>
       <button class="btn btn-s" onclick="generarVision()" style="margin-top:.5rem">↺ Regenerar con IA</button>
     </div>
 
     <button class="btn btn-s" onclick="show('s-inicio')" style="margin-top:.5rem">← Volver al inicio</button>
+    <div class="ftr">Academia Mujer Fénix 40+</div>
+  </div>
+</div>
+
+<!-- ══ CUADERNO 4: CONTEXTO ══ -->
+<div class="screen" id="s-s4-contexto">
+  <div class="hdr">
+    <button class="bk" onclick="show('s-inicio')">←</button>
+    <div><div class="hdr-logo">Cuaderno 4</div><div class="hdr-sub">Metas que sostienen cada fruto</div></div>
+  </div>
+  <div class="cnt">
+    <div class="sesion-hero">
+      <span class="sesion-icon">🎯</span>
+      <div class="sesion-label">Cuaderno 4</div>
+      <div class="sesion-titulo">Metas que sostienen<br>cada fruto</div>
+      <div class="sesion-sub">De un deseo general, a algo que puedas ver que ya está pasando.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-tit">Del "quiero" al "así se ve"</div>
+      <div class="card-txt">En el Cuaderno 2 escribiste lo que quieres en cada área. Hoy, una conversación breve por cada fruto te va a ayudar a aterrizar eso en algo concreto — no una obligación, una señal clara de que ya lo estás viviendo.</div>
+    </div>
+
+    <div class="principio" style="text-align:left">
+      <div class="principio-label">Cómo funciona</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.9);line-height:1.8;margin-top:.3rem">
+        Eliges un fruto, y conversas con una guía que ya leyó lo que escribiste en el Cuaderno 2.<br><br>
+        No es un formulario — es una conversación breve, pregunta por pregunta, hasta que aparezca algo concreto y tuyo.<br><br>
+        Puedes hacer los 6 frutos hoy, o de a uno, cuando quieras.
+      </div>
+    </div>
+
+    <button class="btn btn-p" onclick="show('s-s4-ejercicio')">Empezar →</button>
+    <div class="ftr">Academia Mujer Fénix 40+</div>
+  </div>
+</div>
+
+<!-- ══ CUADERNO 4: LISTA DE FRUTOS ══ -->
+<div class="screen" id="s-s4-ejercicio">
+  <div class="hdr">
+    <button class="bk" onclick="show('s-s4-contexto')">←</button>
+    <div><div class="hdr-logo">Cuaderno 4</div><div class="hdr-sub">Metas que sostienen cada fruto</div></div>
+  </div>
+  <div class="cnt">
+    <div class="ej-header">
+      <div class="ej-num">Ejercicio 4 · Cuaderno 4</div>
+      <div class="ej-tit">Elige un fruto para conversar</div>
+      <div class="ej-sub">Toca uno para empezar (o continuar) su conversación.</div>
+    </div>
+
+    <div id="s4-frutos-lista" style="display:flex;flex-direction:column;gap:8px;margin:1rem 0"></div>
+
+    <button class="btn btn-s" onclick="show('s-inicio')" style="margin-top:.5rem">← Volver al inicio</button>
+    <div class="ftr">Academia Mujer Fénix 40+</div>
+  </div>
+</div>
+
+<!-- ══ CUADERNO 4: CHAT POR FRUTO ══ -->
+<div class="screen" id="s-s4-chat">
+  <div class="hdr">
+    <button class="bk" onclick="show('s-s4-ejercicio')">←</button>
+    <div><div class="hdr-logo" id="s4-chat-titulo">Cuaderno 4</div><div class="hdr-sub" id="s4-chat-sub">Conversación</div></div>
+  </div>
+  <div class="cnt">
+    <div id="s4-chat-mensajes" style="display:flex;flex-direction:column;gap:10px;margin-bottom:1rem"></div>
+
+    <div id="s4-chat-loading" style="display:none;text-align:center;padding:1.2rem;color:var(--su)">
+      <div style="font-size:24px;margin-bottom:.4rem">✨</div>
+      <div style="font-size:13px">Pensando...</div>
+    </div>
+
+    <div id="s4-chat-input-wrap" style="display:none">
+      <textarea id="s4-chat-input" rows="3" placeholder="Escribe tu respuesta..." style="width:100%;padding:10px 12px;border:1.5px solid var(--ln);border-radius:9px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;resize:none;line-height:1.7"></textarea>
+      <button class="btn btn-p" onclick="enviarMensajeS4()" style="margin-top:.6rem">Enviar →</button>
+    </div>
+
+    <div id="s4-chat-final" style="display:none;margin-top:.5rem">
+      <div class="card">
+        <div class="card-tit" style="color:var(--mo)">✦ Tu meta</div>
+        <textarea id="s4-meta-texto" rows="2" oninput="guardarMetaS4Debounced()" style="width:100%;padding:10px 12px;border:1.5px solid var(--ln);border-radius:9px;font-family:Playfair Display,serif;font-size:14px;color:var(--tx);background:var(--ll);outline:none;resize:none;line-height:1.7;margin-bottom:.6rem"></textarea>
+        <div class="card-tit" style="color:var(--mo);font-size:12px">La acción que la sostiene</div>
+        <textarea id="s4-accion-texto" rows="2" oninput="guardarMetaS4Debounced()" style="width:100%;padding:10px 12px;border:1.5px solid var(--ln);border-radius:9px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:var(--ll);outline:none;resize:none;line-height:1.7"></textarea>
+      </div>
+      <button class="btn btn-p" onclick="confirmarMetaS4()">Guardar esta meta ✦</button>
+      <button class="btn btn-s" onclick="reiniciarChatS4()" style="margin-top:.5rem">↺ Seguir conversando</button>
+    </div>
+
     <div class="ftr">Academia Mujer Fénix 40+</div>
   </div>
 </div>
