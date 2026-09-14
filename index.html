@@ -1078,10 +1078,14 @@ async function primeraPreguntaC4(fruto) {
   mostrarTyping();
 
   var sys = buildSysPrompt(fruto);
-  var usr = 'Área: ' + fruto.titulo + '.' +
-    (s2resp ? ' Lo que escribió sobre esta área: "' + s2resp + '".' : ' No ha escrito nada sobre esta área aún.') +
-    (vision ? ' Su visión de vida: "' + vision + '".' : '') +
-    ' Basándote en lo que escribió, haz una primera pregunta de coaching para profundizar y aterrizar eso en algo concreto. Si escribió algo muy abstracto, pregunta cómo se vería eso en su día a día. Si ya es específico, va directo a cuánto/cuándo. Una sola pregunta, cálida, máximo 2 oraciones.';
+  var yoSoy = D.caracts && D.caracts.length ? D.caracts.slice(0,6).join(', ') : '';
+  var usr = 'Área a trabajar: ' + fruto.titulo + '. ' +
+    (yoSoy ? 'Ella se reconoce como: ' + yoSoy + '. ' : '') +
+    (s2resp ? 'Lo que escribió sobre esta área: "' + s2resp + '". ' : 'No ha escrito nada sobre esta área aún. ') +
+    (vision ? 'Su visión de vida: "' + vision.substring(0,400) + '". ' : '') +
+    'Basándote en todo esto, haz una primera pregunta de coaching que conecte quién es con lo que quiere en esta área. ' +
+    'Si lo que escribió es abstracto ("quiero sentirme merecedora"), pregunta cómo se vería eso concreto en su vida. ' +
+    'Si es específico, profundiza en el número o la frecuencia. Una sola pregunta, cálida, máximo 2 oraciones.';
 
   var respuesta = await llamarIA(sys, usr, []);
   quitarTyping();
@@ -1093,16 +1097,28 @@ async function primeraPreguntaC4(fruto) {
 }
 
 function buildSysPrompt(fruto) {
-  return 'Eres una coach de vida cálida, directa y experta para mujeres de 40+. Tu trabajo es ayudar a ' +
-    'la usuaria a definir una meta SMART a 90 días en el área de ' + fruto.titulo + '. ' +
-    'Haz UNA pregunta a la vez. Escucha su respuesta y decide si necesitas: ' +
-    '(1) pedir más especificidad — qué significa eso en su día a día, qué cambia concreto, ' +
-    '(2) pedir un número o frecuencia — cuánto, cuántas veces, cuándo, ' +
-    '(3) verificar si es alcanzable en 90 días o necesita una etapa, ' +
-    '(4) preguntar si ya lo tiene y solo quiere mantenerlo. ' +
-    'Cuando ya tienes suficiente información (máximo 4-5 intercambios), escribe exactamente: ' +
-    'GENERAR_META: seguido de la meta SMART en primera persona y en PRESENTE (tengo, disfruto, gano, siento, comparto...). ' +
-    'Sin markdown. Sin asteriscos. Español con tildes. Tono cálido, como una coach que te conoce.';
+  // Build rich context from all cuadernos
+  var s2resp = D.s2 && D.s2[fruto.key] ? D.s2[fruto.key] : '';
+  var vision = D.s3 && D.s3.vision ? D.s3.vision : '';
+  var yoSoy = D.caracts && D.caracts.length ? D.caracts.slice(0,8).join(', ') : '';
+
+  var contexto = '';
+  if (yoSoy) contexto += 'Quién es: ' + yoSoy + '. ';
+  if (vision) contexto += 'Su visión de vida (en presente): "' + vision.substring(0,500) + '". ';
+  if (s2resp) contexto += 'Lo que quiere en ' + fruto.titulo + ': "' + s2resp + '". ';
+
+  return 'Eres una coach de vida cálida, directa y experta para mujeres de 40+. ' +
+    'Tienes este contexto de la persona: ' + contexto +
+    'Tu trabajo es ayudarla a definir una o más acciones o metas concretas y medibles a 90 días en el área de ' + fruto.titulo + ', ' +
+    'conectando lo que ya sabe de sí misma (quién es) con lo que quiere lograr (su visión). ' +
+    'IMPORTANTE: haz UNA pregunta a la vez. Escucha y profundiza según lo que responde. Puedes preguntar: ' +
+    '¿cómo se vería eso en tu día a día? ¿qué cambiaría concreto? ¿qué número o frecuencia? ' +
+    '¿cómo conecta eso con quién eres? ¿ya lo tienes y solo quieres cuidarlo? ' +
+    '¿es alcanzable en 90 días o necesitas definir una etapa? ' +
+    'Cuando tengas suficiente claridad (máximo 5 intercambios), escribe exactamente: ' +
+    'GENERAR_META: seguido de la meta o acción concreta en primera persona y en PRESENTE ' +
+    '(tengo, disfruto, gano, siento, hago, comparto, ahorró, dedico...). ' +
+    'Que sea específica, medible y conectada con su visión. Sin markdown. Sin asteriscos. Español con tildes.';
 }
 
 async function enviarRespuestaC4() {
