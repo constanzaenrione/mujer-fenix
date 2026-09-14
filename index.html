@@ -948,16 +948,62 @@ function iniciarC4() {
   if (!D.s4) D.s4 = {};
   c4.metas = D.s4.metas || {};
   c4.respondido = D.s4.respondido || {};
-  // Find first fruto without meta
-  c4.frutoIdx = 0;
-  for (var i = 0; i < C4_FRUTOS.length; i++) {
-    if (!c4.metas[C4_FRUTOS[i].key]) { c4.frutoIdx = i; break; }
-    if (i === C4_FRUTOS.length - 1) {
-      show('s-s4-resumen'); renderC4Resumen(); return;
-    }
+  // Always show fruto selector first
+  show('s-s4-selector');
+  renderC4Selector();
+}
+
+function renderC4Selector() {
+  var cnt = document.getElementById('c4-selector-cnt');
+  cnt.innerHTML = '';
+
+  var metas = c4.metas;
+  var todasListas = C4_FRUTOS.every(function(f) { return !!metas[f.key]; });
+
+  // Hero
+  var hero = document.createElement('div');
+  hero.style.cssText = 'background:linear-gradient(135deg,var(--mo),var(--ro));border-radius:18px;padding:1.4rem;text-align:center;margin-bottom:1.2rem';
+  hero.innerHTML = '<div style="font-size:32px;margin-bottom:.4rem">🎯</div>' +
+    '<div style="font-family:Playfair Display,serif;color:var(--do);font-size:16px">Mis metas a 90 días</div>' +
+    '<div style="font-size:11px;color:rgba(255,255,255,.8);margin-top:.3rem">Elige un área para trabajar o revisar</div>';
+  cnt.appendChild(hero);
+
+  // Fruto cards
+  C4_FRUTOS.forEach(function(f, i) {
+    var tieneMeta = !!metas[f.key];
+    var card = document.createElement('div');
+    card.style.cssText = 'background:white;border-radius:13px;padding:.9rem 1rem;margin-bottom:.7rem;display:flex;align-items:center;gap:12px;cursor:pointer;border:1.5px solid ' +
+      (tieneMeta ? '#C9A84C' : 'var(--ln)') + ';transition:all .2s';
+    card.innerHTML =
+      '<div style="width:38px;height:38px;border-radius:10px;background:' + f.color +
+      ';display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">' + f.icon + '</div>' +
+      '<div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--tx)">' + f.letra + ' — ' + f.titulo + '</div>' +
+      (tieneMeta
+        ? '<div style="font-size:11px;color:var(--su);margin-top:2px;font-style:italic">' + metas[f.key].substring(0,60) + '...</div>'
+        : '<div style="font-size:11px;color:var(--su);margin-top:2px">Sin meta definida aún</div>') +
+      '</div>' +
+      '<span style="font-size:12px;padding:3px 10px;border-radius:20px;background:' +
+      (tieneMeta ? '#FFF8E0' : 'var(--lv)') +
+      ';color:' + (tieneMeta ? '#9a7a00' : 'var(--mo)') + ';font-weight:500;flex-shrink:0">' +
+      (tieneMeta ? '✓ Lista' : 'Trabajar') + '</span>';
+    card.onclick = (function(idx) { return function() {
+      c4.frutoIdx = idx;
+      show('s-s4-chat');
+      iniciarFrutoC4();
+    }; })(i);
+    cnt.appendChild(card);
+  });
+
+  // Botón ver resumen si hay al menos una meta
+  if (Object.keys(metas).length > 0) {
+    var btnR = document.createElement('button'); btnR.className = 'btn btn-s'; btnR.style.marginTop = '.5rem';
+    btnR.textContent = '✦ Ver mis metas actuales';
+    btnR.onclick = function() { show('s-s4-resumen'); renderC4Resumen(); };
+    cnt.appendChild(btnR);
   }
-  show('s-s4-chat');
-  iniciarFrutoC4();
+
+  var ftr = document.createElement('div'); ftr.className = 'ftr'; ftr.textContent = 'Academia Mujer Fénix 40+';
+  cnt.appendChild(ftr);
 }
 
 function iniciarFrutoC4() {
@@ -1000,15 +1046,42 @@ function iniciarFrutoC4() {
 
 async function primeraPreguntaC4(fruto) {
   var s2resp = D.s2 && D.s2[fruto.key] ? D.s2[fruto.key] : '';
+  var metaExistente = c4.metas[fruto.key] || '';
   var vision = D.s3 && D.s3.vision ? D.s3.vision.substring(0, 400) : '';
+
+  // PRIMERO: mostrar lo que ya escribió como base
+  if (s2resp) {
+    var introMsg = '¡Hola! Antes de empezar, aquí está lo que escribiste sobre esta área en tu Cuaderno 2:';
+    mostrarMensaje(introMsg, 'coach');
+    // Mostrar su texto en burbuja destacada
+    var cnt = document.getElementById('c4-mensajes');
+    var quote = document.createElement('div');
+    quote.style.cssText = 'background:var(--lv);border-radius:10px;padding:.9rem 1rem;font-size:12px;color:var(--su);line-height:1.65;border-left:3px solid var(--do);margin:.3rem 0';
+    quote.innerHTML = '<div style="font-size:10px;font-weight:500;color:var(--mo);margin-bottom:4px">Lo que escribiste:</div>' + s2resp;
+    cnt.appendChild(quote);
+    cnt.scrollTop = cnt.scrollHeight;
+  }
+
+  if (metaExistente) {
+    mostrarMensaje('Ya tienes una meta definida para esta área. ¿Quieres revisarla, ajustarla o trabajarla de nuevo?', 'coach');
+    var cntM = document.getElementById('c4-mensajes');
+    var quoteM = document.createElement('div');
+    quoteM.style.cssText = 'background:#FFF8E0;border-radius:10px;padding:.9rem 1rem;font-size:12px;color:var(--tx);line-height:1.65;border-left:3px solid var(--do);font-style:italic;margin:.3rem 0';
+    quoteM.innerHTML = '<div style="font-size:10px;font-weight:500;color:#9a7a00;margin-bottom:4px">Tu meta actual:</div>' + metaExistente;
+    cntM.appendChild(quoteM);
+    cntM.scrollTop = cntM.scrollHeight;
+    habilitarInput();
+    c4.historial.push({ role: 'assistant', content: 'Ya tienes una meta definida. Meta actual: ' + metaExistente + '. ¿Quieres revisarla, ajustarla o trabajarla de nuevo?' });
+    return;
+  }
 
   mostrarTyping();
 
   var sys = buildSysPrompt(fruto);
   var usr = 'Área: ' + fruto.titulo + '.' +
-    (s2resp ? ' Lo que escribió sobre esta área: "' + s2resp + '".' : '') +
+    (s2resp ? ' Lo que escribió sobre esta área: "' + s2resp + '".' : ' No ha escrito nada sobre esta área aún.') +
     (vision ? ' Su visión de vida: "' + vision + '".' : '') +
-    ' Haz tu primera pregunta para iniciar la conversación de coaching. Que sea abierta, cálida y no asuma nada — puede que ya esté bien en esta área o quiera algo muy específico. Una sola pregunta, máxima 2 oraciones.';
+    ' Basándote en lo que escribió, haz una primera pregunta de coaching para profundizar y aterrizar eso en algo concreto. Si escribió algo muy abstracto, pregunta cómo se vería eso en su día a día. Si ya es específico, va directo a cuánto/cuándo. Una sola pregunta, cálida, máximo 2 oraciones.';
 
   var respuesta = await llamarIA(sys, usr, []);
   quitarTyping();
@@ -1503,10 +1576,19 @@ function show(id) {
   </div>
 </div>
 
+<!-- ══ CUADERNO 4: SELECTOR ══ -->
+<div class="screen" id="s-s4-selector">
+  <div class="hdr">
+    <button class="bk" onclick="show('s-inicio')">←</button>
+    <div><div class="hdr-logo">Cuaderno 4</div><div class="hdr-sub">Mis metas a 90 días</div></div>
+  </div>
+  <div class="cnt" id="c4-selector-cnt"></div>
+</div>
+
 <!-- ══ CUADERNO 4: CHAT ══ -->
 <div class="screen" id="s-s4-chat">
   <div class="hdr">
-    <button class="bk" onclick="show('s-s4-contexto')">←</button>
+    <button class="bk" onclick="show('s-s4-selector')">←</button>
     <div><div class="hdr-logo" id="c4-chat-titulo">Cuaderno 4</div><div class="hdr-sub" id="c4-chat-sub">Conversación con tu coach</div></div>
   </div>
   <div class="cnt">
