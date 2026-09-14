@@ -160,6 +160,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ll);color:var(--tx);min-h
 .cm{display:flex;flex-direction:column;gap:6px}
 
 /* PRINT */
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
 @media print{
   body{background:white}
   .screen{display:none !important}
@@ -723,13 +724,13 @@ var FRUTOS_S2 = [
   { key:'salud', letra:'S', titulo:'Salud', subtitulo:'En mi cuerpo y mi energía', icon:'💚', color:'#1A5C3A',
     ejemplos:[
       'Quiero sentirme liviana, con energía y vitalidad para vivir plenamente.',
-      'Quiero pesar X kilos y sentirme bien en mi cuerpo.',
-      'Quiero usar la talla X y que mi ropa me quede cómoda.',
+      'Quiero recuperar mi movilidad y dejar de tener dolor en las rodillas.',
       'Quiero moverme al menos 3 veces a la semana haciendo algo que disfrute.',
       'Quiero dormir 7-8 horas y despertar descansada.',
-      'Quiero comer de manera más consciente y nutritiva.'
+      'Quiero comer de manera más consciente y nutritiva.',
+      'Quiero tener energía para hacer todo lo que me importa sin agotarme.'
     ],
-    pregunta:'¿Qué quieres en tu cuerpo y tu energía?' }
+    pregunta:'¿Qué quieres en tu salud, cuerpo y energía?' }
 ];
 
 function renderFrutosS2() {
@@ -845,7 +846,7 @@ show = function(id) {
   if (id === 's-s2-ejercicio') renderFrutosS2();
   if (id === 's-s2-abecedario') renderAbecedario();
   if (id === 's-s3-ejercicio') initS3();
-  if (id === 's-s4-resumen' && D.s4 && D.s4.metas) { c4State.metas = D.s4.metas; c4State.respuestas = D.s4.respuestas || {}; }
+  if (id === 's-s4-resumen') { c4.metas = (D.s4 && D.s4.metas) || {}; renderC4Resumen(); }
 };
 
 
@@ -925,559 +926,264 @@ function initS3() {
   }
 }
 
-// ── CUADERNO 4: METAS A 90 DÍAS ──
+// ── CUADERNO 4: COACH CHAT ──
 
 var C4_FRUTOS = [
-  {
-    key: 'finanzas', letra: 'F', titulo: 'Finanzas', icon: '💰', color: '#4B0E6E',
-    preguntas: [
-      '¿Qué significa para ti en concreto "tener lo que quieres en finanzas"? Por ejemplo: ¿de qué monto estaríamos hablando — deuda que quieres saldar, ahorro que quieres alcanzar, ingreso mensual que quieres generar?',
-      '¿Cómo sabrías que lo lograste? ¿Qué número, cifra o situación concreta verías en tu cuenta, tus deudas o tu ingreso?',
-      '¿En cuánto tiempo lo ves posible? ¿Es algo que puedes lograr en 90 días, o necesitarías más tiempo? Si necesitas más, ¿qué podrías lograr en estos primeros 90 días?'
-    ]
-  },
-  {
-    key: 'relaciones', letra: 'R', titulo: 'Relaciones', icon: '💗', color: '#8B1A4A',
-    preguntas: [
-      '¿Qué quieres que cambie o mejore concretamente en tus relaciones? ¿Es con tu pareja, tus hijos, amigas, familia? ¿Qué falta hoy?',
-      '¿Cómo se vería eso en tu semana? Por ejemplo: ¿cuántas veces a la semana, cuánto tiempo, qué tipo de momento compartido?',
-      '¿Qué cosa concreta podrías hacer o dejar de hacer en los próximos 90 días que marcaría una diferencia real en esa relación?'
-    ]
-  },
-  {
-    key: 'talentos', letra: 'U', titulo: 'Uso de mis dones y talentos', icon: '⭐', color: '#5C1A7A',
-    preguntas: [
-      '¿Qué es lo que quieres hacer, crear o aportar que hoy no estás haciendo o no estás haciendo suficientemente? Sé específica.',
-      '¿Cómo sabrías que en 90 días avanzaste en eso? ¿Qué habrías lanzado, creado, aprendido o logrado?',
-      '¿Cuánto tiempo a la semana podrías dedicarle a esto de manera realista? ¿Y en qué días o momentos del día?'
-    ]
-  },
-  {
-    key: 'tranquilidad', letra: 'T', titulo: 'Tranquilidad y paz mental', icon: '🌸', color: '#7B1A5C',
-    preguntas: [
-      '¿Qué es lo que más te quita paz hoy? ¿Es cómo te hablas, el ritmo de vida, algo que no has resuelto, una relación, una situación?',
-      '¿Cómo se vería tu vida si tuvieras esa paz que buscas? ¿Qué harías diferente, cómo te sentirías al levantarte, qué dejarías de hacer?',
-      '¿Qué una cosa concreta podrías empezar o dejar en los próximos 90 días que te acercaría a esa tranquilidad?'
-    ]
-  },
-  {
-    key: 'disfrute', letra: 'O', titulo: 'Ocio y disfrute', icon: '✨', color: '#8B4A00',
-    preguntas: [
-      '¿Qué es lo que disfrutas y hoy no te estás dando? ¿Es tiempo, actividades, descanso, conexión, placer? ¿Qué extrañas?',
-      '¿Cuánto tiempo a la semana quieres dedicar a eso? ¿Qué actividad concreta quieres retomar o empezar?',
-      '¿Qué tendría que pasar para que en 90 días ese disfrute sea parte real de tu semana — no un lujo, sino una constante?'
-    ]
-  },
-  {
-    key: 'salud', letra: 'S', titulo: 'Salud', icon: '💚', color: '#1A5C3A',
-    preguntas: [
-      '¿Qué quieres lograr en tu salud y cuerpo? Por ejemplo: ¿hay un peso, una talla, un nivel de energía, una rutina de movimiento o algo de alimentación que quieras cambiar?',
-      '¿Cuánto quieres pesar o qué talla quieres usar? ¿Cuántas veces a la semana quieres moverte y qué tipo de movimiento? Dime los números concretos.',
-      '¿En cuánto tiempo lo ves posible? ¿Qué podrías lograr en estos 90 días específicamente?'
-    ]
-  }
+  { key:'finanzas',    letra:'F', titulo:'Finanzas',                 icon:'💰', color:'#4B0E6E' },
+  { key:'relaciones',  letra:'R', titulo:'Relaciones',                icon:'💗', color:'#8B1A4A' },
+  { key:'talentos',    letra:'U', titulo:'Uso de mis dones y talentos',icon:'⭐', color:'#5C1A7A' },
+  { key:'tranquilidad',letra:'T', titulo:'Tranquilidad y paz mental',  icon:'🌸', color:'#7B1A5C' },
+  { key:'disfrute',    letra:'O', titulo:'Ocio y disfrute',            icon:'✨', color:'#8B4A00' },
+  { key:'salud',       letra:'S', titulo:'Salud',                     icon:'💚', color:'#1A5C3A' }
 ];
 
-var c4State = {
+var c4 = {
   frutoIdx: 0,
-  preguntaIdx: 0,
-  respuestas: {},
-  metas: {}
+  historial: [],   // [{role, content}] for current fruto
+  metas: {},
+  respondido: {}
 };
 
 function iniciarC4() {
   if (!D.s4) D.s4 = {};
-  // Load saved state
-  if (D.s4.metas && Object.keys(D.s4.metas).length > 0) {
-    c4State.metas = D.s4.metas;
-    c4State.respuestas = D.s4.respuestas || {};
-  }
-  c4State.frutoIdx = 0;
-  c4State.preguntaIdx = -1;
+  c4.metas = D.s4.metas || {};
+  c4.respondido = D.s4.respondido || {};
   // Find first fruto without meta
+  c4.frutoIdx = 0;
   for (var i = 0; i < C4_FRUTOS.length; i++) {
-    if (!c4State.metas[C4_FRUTOS[i].key]) {
-      c4State.frutoIdx = i;
-      break;
-    }
+    if (!c4.metas[C4_FRUTOS[i].key]) { c4.frutoIdx = i; break; }
     if (i === C4_FRUTOS.length - 1) {
-      // All done - show summary
-      show('s-s4-resumen');
-      renderC4Resumen();
-      return;
+      show('s-s4-resumen'); renderC4Resumen(); return;
     }
   }
-  show('s-s4-ejercicio');
-  renderC4Pregunta();
+  show('s-s4-chat');
+  iniciarFrutoC4();
 }
 
-function renderC4Pregunta() {
-  var fruto = C4_FRUTOS[c4State.frutoIdx];
-
-  // Special step -1: ¿ya lo tienes?
-  if (c4State.preguntaIdx === -1) {
-    renderC4YaLoTienes(fruto);
-    return;
-  }
-
-  var pregunta = fruto.preguntas[c4State.preguntaIdx];
-  var totalPreguntas = fruto.preguntas.length;
-  var s2resp = D.s2 && D.s2[fruto.key] ? D.s2[fruto.key] : '';
-  var vision = D.s3 && D.s3.vision ? D.s3.vision : '';
+function iniciarFrutoC4() {
+  var fruto = C4_FRUTOS[c4.frutoIdx];
+  c4.historial = [];
 
   // Update header
-  document.getElementById('c4-hdr-logo').textContent = fruto.titulo;
-  document.getElementById('c4-hdr-sub').textContent = 'Pregunta ' + (c4State.preguntaIdx + 1) + ' de ' + totalPreguntas;
+  document.getElementById('c4-chat-titulo').textContent = fruto.titulo;
+  document.getElementById('c4-chat-sub').textContent = 'Conversación con tu coach';
 
-  var cnt = document.getElementById('c4-cnt');
-  cnt.innerHTML = '';
-
-  // Progress bar frutos
-  var prog = document.createElement('div');
-  prog.style.cssText = 'display:flex;gap:5px;margin-bottom:1.2rem';
+  // Progress
+  var prog = document.getElementById('c4-progress');
+  prog.innerHTML = '';
   C4_FRUTOS.forEach(function(f, i) {
     var dot = document.createElement('div');
-    var done = !!c4State.metas[f.key];
-    var active = i === c4State.frutoIdx;
-    dot.style.cssText = 'flex:1;height:4px;border-radius:2px;background:' + (done ? '#C9A84C' : active ? f.color : '#E0D8F0');
+    var done = !!c4.metas[f.key];
+    var active = i === c4.frutoIdx;
+    dot.style.cssText = 'flex:1;height:4px;border-radius:2px;background:' +
+      (done ? '#C9A84C' : active ? f.color : '#E0D8F0');
     prog.appendChild(dot);
   });
-  cnt.appendChild(prog);
 
   // Fruto header
-  var fhdr = document.createElement('div');
-  fhdr.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:1rem';
-  fhdr.innerHTML = '<div style="width:44px;height:44px;border-radius:12px;background:' + fruto.color + ';display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">' + fruto.icon + '</div>' +
-    '<div><div style="font-family:Playfair Display,serif;color:var(--mo);font-size:16px;font-weight:600">' + fruto.letra + ' — ' + fruto.titulo + '</div>' +
-    '<div style="font-size:10px;color:var(--su)">Pregunta ' + (c4State.preguntaIdx + 1) + ' de ' + totalPreguntas + '</div></div>';
-  cnt.appendChild(fhdr);
+  var fhdr = document.getElementById('c4-fruto-hdr');
+  fhdr.innerHTML = '<div style="display:flex;align-items:center;gap:10px">' +
+    '<div style="width:42px;height:42px;border-radius:12px;background:' + fruto.color +
+    ';display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">' + fruto.icon + '</div>' +
+    '<div><div style="font-family:Playfair Display,serif;color:var(--mo);font-size:15px;font-weight:600">' +
+    fruto.letra + ' — ' + fruto.titulo + '</div>' +
+    '<div style="font-size:11px;color:var(--su);margin-top:2px">Área ' + (c4.frutoIdx+1) + ' de ' + C4_FRUTOS.length + '</div></div></div>';
 
-  // Lo que escribió antes (si existe)
-  if (s2resp && c4State.preguntaIdx === 0) {
-    var prev = document.createElement('div');
-    prev.style.cssText = 'background:var(--lv);border-radius:10px;padding:.9rem 1rem;margin-bottom:1rem;font-size:12px;color:var(--su);line-height:1.65';
-    prev.innerHTML = '<div style="font-size:10px;font-weight:500;color:var(--mo);margin-bottom:4px">Lo que escribiste en tu Cuaderno 2:</div>' + s2resp;
-    cnt.appendChild(prev);
-  }
+  // Clear chat and meta
+  document.getElementById('c4-mensajes').innerHTML = '';
+  document.getElementById('c4-input-area').style.display = 'none';
+  document.getElementById('c4-meta-area').style.display = 'none';
 
-  // Pregunta
-  var qcard = document.createElement('div');
-  qcard.style.cssText = 'background:white;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border:1.5px solid rgba(75,14,110,.15);box-shadow:0 2px 10px rgba(75,14,110,.06)';
-  qcard.innerHTML = '<div style="font-size:14px;font-weight:500;color:var(--tx);line-height:1.7">' + pregunta + '</div>';
-  cnt.appendChild(qcard);
-
-  // Respuesta guardada si existe
-  var savedKey = fruto.key + '_p' + c4State.preguntaIdx;
-  var savedResp = c4State.respuestas[savedKey] || '';
-
-  // Textarea
-  var ta = document.createElement('textarea');
-  ta.id = 'c4-resp';
-  ta.rows = 4;
-  ta.placeholder = 'Escribe tu respuesta aquí...';
-  ta.value = savedResp;
-  ta.style.cssText = 'width:100%;padding:12px;border:1.5px solid var(--ln);border-radius:10px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;resize:none;line-height:1.7;min-height:100px';
-  cnt.appendChild(ta);
-
-  // Botones
-  var btnSig = document.createElement('button');
-  btnSig.className = 'btn btn-p';
-  btnSig.style.marginTop = '1rem';
-  var esUltimaPregunta = c4State.preguntaIdx === totalPreguntas - 1;
-  btnSig.textContent = esUltimaPregunta ? 'Generar mi meta ✦' : 'Siguiente pregunta →';
-  btnSig.onclick = function() { avanzarC4(); };
-  cnt.appendChild(btnSig);
-
-  if (c4State.preguntaIdx > 0) {
-    var btnAtras = document.createElement('button');
-    btnAtras.className = 'btn btn-s';
-    btnAtras.style.marginTop = '.5rem';
-    btnAtras.textContent = '← Pregunta anterior';
-    btnAtras.onclick = function() {
-      var resp = document.getElementById('c4-resp').value.trim();
-      var key = fruto.key + '_p' + c4State.preguntaIdx;
-      if (resp) c4State.respuestas[key] = resp;
-      c4State.preguntaIdx--;
-      renderC4Pregunta();
-    };
-    cnt.appendChild(btnAtras);
-  }
-
-  var ftr = document.createElement('div');
-  ftr.className = 'ftr';
-  ftr.textContent = 'Academia Mujer Fénix 40+';
-  cnt.appendChild(ftr);
-
-  // Focus textarea
-  setTimeout(function() { ta.focus(); }, 100);
+  // Start conversation
+  primeraPreguntaC4(fruto);
 }
 
-async function avanzarC4() {
-  var fruto = C4_FRUTOS[c4State.frutoIdx];
-  var resp = document.getElementById('c4-resp').value.trim();
-  var key = fruto.key + '_p' + c4State.preguntaIdx;
-  if (resp) c4State.respuestas[key] = resp;
+async function primeraPreguntaC4(fruto) {
+  var s2resp = D.s2 && D.s2[fruto.key] ? D.s2[fruto.key] : '';
+  var vision = D.s3 && D.s3.vision ? D.s3.vision.substring(0, 400) : '';
 
-  var esUltima = c4State.preguntaIdx === fruto.preguntas.length - 1;
+  mostrarTyping();
 
-  if (!esUltima) {
-    c4State.preguntaIdx++;
-    renderC4Pregunta();
-    return;
+  var sys = buildSysPrompt(fruto);
+  var usr = 'Área: ' + fruto.titulo + '.' +
+    (s2resp ? ' Lo que escribió sobre esta área: "' + s2resp + '".' : '') +
+    (vision ? ' Su visión de vida: "' + vision + '".' : '') +
+    ' Haz tu primera pregunta para iniciar la conversación de coaching. Que sea abierta, cálida y no asuma nada — puede que ya esté bien en esta área o quiera algo muy específico. Una sola pregunta, máxima 2 oraciones.';
+
+  var respuesta = await llamarIA(sys, usr, []);
+  quitarTyping();
+  if (respuesta) {
+    c4.historial.push({ role: 'assistant', content: respuesta });
+    mostrarMensaje(respuesta, 'coach');
+    habilitarInput();
   }
-
-  // Filtro 90 días antes de generar
-  renderC4Filtro90(fruto);
 }
 
-function renderC4Filtro90(fruto) {
-  document.getElementById('c4-hdr-logo').textContent = fruto.titulo;
-  document.getElementById('c4-hdr-sub').textContent = 'Filtro 90 días';
-  var saved = c4State.respuestas[fruto.key+'_90'] || '';
-
-  var cnt = document.getElementById('c4-cnt');
-  cnt.innerHTML = '';
-
-  var fhdr = document.createElement('div');
-  fhdr.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:1rem';
-  fhdr.innerHTML = '<div style="width:44px;height:44px;border-radius:12px;background:'+fruto.color+';display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">'+fruto.icon+'</div>' +
-    '<div><div style="font-family:Playfair Display,serif;color:var(--mo);font-size:16px;font-weight:600">'+fruto.titulo+'</div>' +
-    '<div style="font-size:10px;color:var(--su)">Filtro 90 días</div></div>';
-  cnt.appendChild(fhdr);
-
-  var card = document.createElement('div');
-  card.style.cssText = 'background:white;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border:1.5px solid var(--do)';
-  card.innerHTML = '<div style="font-size:10px;font-weight:600;color:var(--do);letter-spacing:1px;margin-bottom:.5rem">ANTES DE GENERAR TU META</div>' +
-    '<div style="font-size:14px;font-weight:500;color:var(--tx);line-height:1.65;margin-bottom:.8rem">¿Lo que describes es alcanzable en 90 días?</div>' +
-    '<div style="font-size:12px;color:var(--su);line-height:1.7">No tienes que haberlo logrado todo — solo dar un paso real y concreto.<br><br>' +
-    'Si tu meta es muy grande para 90 días, no hay problema: <strong>definamos qué etapa específica sí puedes lograr en este tiempo.</strong></div>';
-  cnt.appendChild(card);
-
-  var opciones = [
-    { val:'si', label:'✅ Sí, es alcanzable en 90 días tal como lo describí.' },
-    { val:'etapa', label:'🔄 Es muy grande — necesito definir una primera etapa para 90 días.' },
-  ];
-
-  var rdContainer = document.createElement('div');
-  rdContainer.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-bottom:1rem';
-  var selectedVal = saved;
-
-  opciones.forEach(function(op) {
-    var d = document.createElement('div');
-    d.className = 'rd' + (selectedVal===op.val?' sl':'');
-    d.innerHTML = '<div class="rdot"></div><span style="font-size:13px">'+op.label+'</span>';
-    d.onclick = function() {
-      rdContainer.querySelectorAll('.rd').forEach(function(r){r.classList.remove('sl');});
-      d.classList.add('sl');
-      selectedVal = op.val;
-      c4State.respuestas[fruto.key+'_90'] = op.val;
-      // Show etapa field if needed
-      var etapaDiv = document.getElementById('c4-etapa-div');
-      if (etapaDiv) etapaDiv.style.display = op.val==='etapa' ? 'block' : 'none';
-    };
-    rdContainer.appendChild(d);
-  });
-  cnt.appendChild(rdContainer);
-
-  // Campo etapa (oculto inicialmente)
-  var etapaDiv = document.createElement('div');
-  etapaDiv.id = 'c4-etapa-div';
-  etapaDiv.style.display = saved==='etapa' ? 'block' : 'none';
-  etapaDiv.innerHTML = '<div style="font-size:12px;font-weight:500;color:var(--mo);margin-bottom:6px">¿Cuál sería tu primera etapa concreta a 90 días?</div>';
-  var etapaTA = document.createElement('textarea');
-  etapaTA.id = 'c4-etapa-txt'; etapaTA.rows = 2;
-  etapaTA.placeholder = 'Ej: En 90 días quiero haber pagado $300.000 de mi deuda total de $1.500.000.';
-  etapaTA.value = c4State.respuestas[fruto.key+'_etapa'] || '';
-  etapaTA.style.cssText = 'width:100%;padding:10px 12px;border:1.5px solid var(--ln);border-radius:9px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;resize:none;min-height:70px';
-  etapaDiv.appendChild(etapaTA);
-  cnt.appendChild(etapaDiv);
-
-  var btnGen = document.createElement('button');
-  btnGen.className = 'btn btn-p'; btnGen.style.marginTop='1rem';
-  btnGen.textContent = 'Generar mi meta ✦';
-  btnGen.onclick = function() {
-    var modo90 = c4State.respuestas[fruto.key+'_90'];
-    if (!modo90) { alert('Elige una opción para continuar.'); return; }
-    if (modo90 === 'etapa') {
-      var etapa = document.getElementById('c4-etapa-txt').value.trim();
-      if (!etapa) { alert('Describe tu primera etapa a 90 días.'); return; }
-      c4State.respuestas[fruto.key+'_etapa'] = etapa;
-    }
-    generarMetaSMART(fruto);
-  };
-  cnt.appendChild(btnGen);
-
-  var ftr=document.createElement('div'); ftr.className='ftr'; ftr.textContent='Academia Mujer Fénix 40+';
-  cnt.appendChild(ftr);
+function buildSysPrompt(fruto) {
+  return 'Eres una coach de vida cálida, directa y experta para mujeres de 40+. Tu trabajo es ayudar a ' +
+    'la usuaria a definir una meta SMART a 90 días en el área de ' + fruto.titulo + '. ' +
+    'Haz UNA pregunta a la vez. Escucha su respuesta y decide si necesitas: ' +
+    '(1) pedir más especificidad — qué significa eso en su día a día, qué cambia concreto, ' +
+    '(2) pedir un número o frecuencia — cuánto, cuántas veces, cuándo, ' +
+    '(3) verificar si es alcanzable en 90 días o necesita una etapa, ' +
+    '(4) preguntar si ya lo tiene y solo quiere mantenerlo. ' +
+    'Cuando ya tienes suficiente información (máximo 4-5 intercambios), escribe exactamente: ' +
+    'GENERAR_META: seguido de la meta SMART en primera persona y en PRESENTE (tengo, disfruto, gano, siento, comparto...). ' +
+    'Sin markdown. Sin asteriscos. Español con tildes. Tono cálido, como una coach que te conoce.';
 }
 
-async function generarMetaSMART(fruto) {
-  // Generar meta SMART con IA
-  renderC4Loading(fruto);
+async function enviarRespuestaC4() {
+  var input = document.getElementById('c4-input');
+  var texto = input.value.trim();
+  if (!texto) return;
+  input.value = '';
+  document.getElementById('c4-input-area').style.display = 'none';
 
-  var s2resp = D.s2 && D.s2[fruto.key] ? D.s2[fruto.key] : 'No especificado';
-  var vision = D.s3 && D.s3.vision ? D.s3.vision.substring(0, 300) : '';
+  mostrarMensaje(texto, 'usuaria');
+  c4.historial.push({ role: 'user', content: texto });
 
-  var respuestas = '';
-  fruto.preguntas.forEach(function(p, i) {
-    var r = c4State.respuestas[fruto.key + '_p' + i] || '';
-    if (r) respuestas += 'Pregunta ' + (i+1) + ': ' + p + ' Respuesta: ' + r + ' | ';
-  });
+  mostrarTyping();
+  var fruto = C4_FRUTOS[c4.frutoIdx];
+  var sys = buildSysPrompt(fruto);
 
-  var sys = 'Eres una coach de vida experta en metodología SMART para mujeres de 40+. Basándote en las respuestas de la usuaria, genera UNA meta SMART concreta para el área indicada. Formato de respuesta: primero la META en 1-2 oraciones en primera persona presente/futuro cercano. Luego si la meta requiere más de 90 días, agrega "ETAPA 90 DÍAS:" con lo específico que logrará en esta etapa. Sin bullets, sin markdown, sin asteriscos. Español con tildes. Máximo 4 oraciones total.';
+  var respuesta = await llamarIA(sys, null, c4.historial);
+  quitarTyping();
 
-  var usr = 'Área: ' + fruto.titulo + '. Lo que quiere: ' + s2resp + '. Sus respuestas al cuestionario: ' + respuestas + '. Genera su meta SMART a 90 días.';
+  if (!respuesta) { habilitarInput(); return; }
 
+  // Check if IA wants to generate meta
+  if (respuesta.indexOf('GENERAR_META:') >= 0) {
+    var meta = respuesta.replace(/GENERAR_META:\s*/i, '').trim();
+    c4.historial.push({ role: 'assistant', content: respuesta });
+    // Show confirmation message before meta
+    mostrarMensaje('Perfecto. Con todo lo que me contaste, aquí está tu meta:', 'coach');
+    mostrarMeta(meta);
+  } else {
+    c4.historial.push({ role: 'assistant', content: respuesta });
+    mostrarMensaje(respuesta, 'coach');
+    habilitarInput();
+  }
+}
+
+async function llamarIA(sys, usr, historial) {
   try {
+    var messages = historial.length > 0
+      ? historial
+      : [{ role: 'user', content: usr }];
+
     var res = await fetch('https://mujerfenix.conyenrione.workers.dev/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 300, system: sys, messages: [{ role: 'user', content: usr }] })
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 400,
+        system: sys,
+        messages: messages
+      })
     });
     var data = await res.json();
-    var meta = data.content && data.content[0] ? data.content[0].text.trim() : '';
-    if (!meta) throw new Error('Sin respuesta');
-
-    c4State.metas[fruto.key] = meta;
-    if (!D.s4) D.s4 = {};
-    D.s4.metas = c4State.metas;
-    D.s4.respuestas = c4State.respuestas;
-    guardarSB();
-
-    renderC4MetaGenerada(fruto, meta);
-
+    return data.content && data.content[0] ? data.content[0].text.trim() : '';
   } catch(e) {
-    var cnt = document.getElementById('c4-cnt');
-    cnt.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--ro)">Error al generar la meta. Verifica tu conexión.</div>';
-    var btnRetry = document.createElement('button');
-    btnRetry.className = 'btn btn-s'; btnRetry.textContent = '↺ Intentar de nuevo';
-    btnRetry.onclick = function() { avanzarC4(); };
-    cnt.appendChild(btnRetry);
+    console.error('IA error:', e);
+    return '';
   }
 }
 
-function renderC4YaLoTienes(fruto) {
-  var s2resp = D.s2 && D.s2[fruto.key] ? D.s2[fruto.key] : '';
-  document.getElementById('c4-hdr-logo').textContent = fruto.titulo;
-  document.getElementById('c4-hdr-sub').textContent = 'Punto de partida';
+function mostrarMensaje(texto, tipo) {
+  var cnt = document.getElementById('c4-mensajes');
+  var div = document.createElement('div');
+  var esCoach = tipo === 'coach';
 
-  var cnt = document.getElementById('c4-cnt');
-  cnt.innerHTML = '';
+  div.style.cssText = 'display:flex;gap:8px;align-items:flex-start;' +
+    (esCoach ? '' : 'flex-direction:row-reverse');
 
-  // Progress
-  var prog = document.createElement('div');
-  prog.style.cssText = 'display:flex;gap:5px;margin-bottom:1.2rem';
-  C4_FRUTOS.forEach(function(f,i) {
-    var dot = document.createElement('div');
-    var done = !!c4State.metas[f.key];
-    var active = i === c4State.frutoIdx;
-    dot.style.cssText = 'flex:1;height:4px;border-radius:2px;background:' + (done?'#C9A84C':active?f.color:'#E0D8F0');
-    prog.appendChild(dot);
-  });
-  cnt.appendChild(prog);
+  var avatar = document.createElement('div');
+  avatar.style.cssText = 'width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;background:' +
+    (esCoach ? 'var(--mo)' : 'var(--lv)');
+  avatar.textContent = esCoach ? '🔥' : '💛';
 
-  // Fruto header
-  var fhdr = document.createElement('div');
-  fhdr.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:1rem';
-  fhdr.innerHTML = '<div style="width:44px;height:44px;border-radius:12px;background:'+fruto.color+';display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">'+fruto.icon+'</div>' +
-    '<div><div style="font-family:Playfair Display,serif;color:var(--mo);font-size:16px;font-weight:600">'+fruto.letra+' — '+fruto.titulo+'</div>' +
-    '<div style="font-size:10px;color:var(--su)">Antes de empezar</div></div>';
-  cnt.appendChild(fhdr);
+  var bubble = document.createElement('div');
+  bubble.style.cssText = 'max-width:82%;padding:10px 13px;border-radius:' +
+    (esCoach ? '4px 14px 14px 14px' : '14px 4px 14px 14px') +
+    ';font-size:13px;line-height:1.7;' +
+    (esCoach
+      ? 'background:var(--mo);color:white;'
+      : 'background:white;color:var(--tx);border:1.5px solid var(--ln);');
+  bubble.textContent = texto;
 
-  // Lo que escribió
-  if (s2resp) {
-    var prev = document.createElement('div');
-    prev.style.cssText = 'background:var(--lv);border-radius:10px;padding:.9rem 1rem;margin-bottom:1rem;font-size:12px;color:var(--su);line-height:1.65';
-    prev.innerHTML = '<div style="font-size:10px;font-weight:500;color:var(--mo);margin-bottom:4px">Lo que escribiste en tu Cuaderno 2:</div>' + s2resp;
-    cnt.appendChild(prev);
-  }
-
-  // Pregunta clave
-  var qcard = document.createElement('div');
-  qcard.style.cssText = 'background:white;border-radius:14px;padding:1.3rem;margin-bottom:1rem;border:1.5px solid var(--do)';
-  qcard.innerHTML = '<div style="font-size:10px;font-weight:600;color:var(--do);letter-spacing:1px;margin-bottom:.5rem">ANTES DE DEFINIR TU META</div>' +
-    '<div style="font-size:15px;font-weight:500;color:var(--tx);line-height:1.65">En el área de <strong style="color:var(--mo)">'+fruto.titulo+'</strong>...</div>' +
-    '<div style="font-size:13px;color:var(--su);margin-top:.6rem;line-height:1.7">¿Cómo te sientes respecto a esta área hoy?</div>';
-  cnt.appendChild(qcard);
-
-  // Opciones
-  var opciones = [
-    { val:'quiero', icon:'🎯', label:'Quiero lograr algo nuevo', desc:'Tengo una meta que aún no he alcanzado en esta área.' },
-    { val:'mantener', icon:'💛', label:'Ya lo tengo y quiero mantenerlo', desc:'Estoy feliz con esta área. Solo quiero cuidarla y seguir disfrutándola.' },
-  ];
-
-  var rdContainer = document.createElement('div');
-  rdContainer.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-bottom:1rem';
-  var selectedVal = c4State.respuestas[fruto.key+'_modo'] || '';
-
-  opciones.forEach(function(op) {
-    var d = document.createElement('div');
-    d.className = 'rd' + (selectedVal===op.val?' sl':'');
-    d.innerHTML = '<div class="rdot"></div><div style="flex:1"><div style="font-size:13px;font-weight:500">'+op.icon+' '+op.label+'</div><div style="font-size:11px;color:var(--su);margin-top:2px">'+op.desc+'</div></div>';
-    d.onclick = function() {
-      rdContainer.querySelectorAll('.rd').forEach(function(r){r.classList.remove('sl');});
-      d.classList.add('sl');
-      c4State.respuestas[fruto.key+'_modo'] = op.val;
-    };
-    rdContainer.appendChild(d);
-  });
-  cnt.appendChild(rdContainer);
-
-  var btnSig = document.createElement('button');
-  btnSig.className = 'btn btn-p';
-  btnSig.textContent = 'Continuar →';
-  btnSig.onclick = function() {
-    var modo = c4State.respuestas[fruto.key+'_modo'];
-    if (!modo) { alert('Elige una opción para continuar.'); return; }
-    if (modo === 'mantener') {
-      // Go straight to "cómo lo voy a cuidar" — special flow
-      renderC4Mantener(fruto);
-    } else {
-      c4State.preguntaIdx = 0;
-      renderC4Pregunta();
-    }
-  };
-  cnt.appendChild(btnSig);
-
-  var ftr = document.createElement('div'); ftr.className='ftr'; ftr.textContent='Academia Mujer Fénix 40+';
-  cnt.appendChild(ftr);
+  div.appendChild(avatar);
+  div.appendChild(bubble);
+  cnt.appendChild(div);
+  cnt.scrollTop = cnt.scrollHeight;
+  window.scrollTo(0, document.body.scrollHeight);
 }
 
-function renderC4Mantener(fruto) {
-  document.getElementById('c4-hdr-logo').textContent = fruto.titulo;
-  document.getElementById('c4-hdr-sub').textContent = 'Cómo lo cuido';
-  var s2resp = D.s2 && D.s2[fruto.key] ? D.s2[fruto.key] : '';
-  var saved = c4State.respuestas[fruto.key+'_mantener'] || '';
-
-  var cnt = document.getElementById('c4-cnt');
-  cnt.innerHTML = '';
-
-  var fhdr = document.createElement('div');
-  fhdr.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:1rem';
-  fhdr.innerHTML = '<div style="width:44px;height:44px;border-radius:12px;background:'+fruto.color+';display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">'+fruto.icon+'</div>' +
-    '<div><div style="font-family:Playfair Display,serif;color:var(--mo);font-size:16px;font-weight:600">'+fruto.titulo+'</div>' +
-    '<div style="font-size:10px;color:var(--su)">💛 Ya lo tienes — cómo lo cuidas</div></div>';
-  cnt.appendChild(fhdr);
-
-  var card = document.createElement('div');
-  card.style.cssText = 'background:linear-gradient(135deg,#FFF8E8,#FFF3D5);border:1px solid var(--do);border-radius:14px;padding:1.2rem;margin-bottom:1rem';
-  card.innerHTML = '<div style="font-size:13px;color:#4a3200;line-height:1.75">¡Qué hermoso que ya estés disfrutando de esta área! 💛<br><br>' +
-    'Ahora cuéntame: <strong>¿cómo quieres seguir cuidándola y disfrutándola?</strong><br>' +
-    'Por ejemplo: ¿qué acciones o hábitos concretos quieres mantener o potenciar en los próximos 90 días?</div>';
-  cnt.appendChild(card);
-
-  if (s2resp) {
-    var prev = document.createElement('div');
-    prev.style.cssText = 'background:var(--lv);border-radius:10px;padding:.8rem;margin-bottom:.8rem;font-size:12px;color:var(--su);line-height:1.6';
-    prev.innerHTML = '<strong style="color:var(--mo)">Lo que escribiste:</strong><br>' + s2resp;
-    cnt.appendChild(prev);
-  }
-
-  var ta = document.createElement('textarea');
-  ta.id = 'c4-mantener-resp'; ta.rows = 4;
-  ta.placeholder = 'Ej: Quiero seguir teniendo mi tarde de los martes para mí. Quiero mantener mi rutina de ejercicio 3 veces a la semana. Quiero seguir ahorrando $X mensual...';
-  ta.value = saved;
-  ta.style.cssText = 'width:100%;padding:12px;border:1.5px solid var(--ln);border-radius:10px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;resize:none;line-height:1.7;min-height:110px';
-  cnt.appendChild(ta);
-
-  var btnGen = document.createElement('button');
-  btnGen.className = 'btn btn-p'; btnGen.style.marginTop='1rem';
-  btnGen.textContent = 'Generar mi compromiso de cuidado ✦';
-  btnGen.onclick = async function() {
-    var resp = document.getElementById('c4-mantener-resp').value.trim();
-    if (!resp) { alert('Cuéntame cómo quieres cuidar esta área.'); return; }
-    c4State.respuestas[fruto.key+'_mantener'] = resp;
-    renderC4Loading(fruto);
-
-    var sys = 'Eres una coach de vida para mujeres de 40+. La usuaria ya está bien en esta área de su vida y quiere mantenerla. Genera UN compromiso de cuidado concreto — 2 oraciones máximo, en primera persona, tiempo presente/futuro cercano. Que sea específico: con frecuencia, acciones, o números cuando aplique. Sin markdown, sin asteriscos. Español con tildes.';
-    var usr = 'Área: '+fruto.titulo+'. Lo que ya tiene: '+s2resp+'. Cómo quiere cuidarlo: '+resp+'. Genera su compromiso de cuidado para los próximos 90 días.';
-
-    try {
-      var res = await fetch('https://mujerfenix.conyenrione.workers.dev/', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:200,system:sys,messages:[{role:'user',content:usr}]})
-      });
-      var data = await res.json();
-      var meta = data.content && data.content[0] ? data.content[0].text.trim() : '';
-      if (!meta) throw new Error('Sin respuesta');
-      c4State.metas[fruto.key] = '💛 MANTENER: ' + meta;
-      if (!D.s4) D.s4={};
-      D.s4.metas = c4State.metas; D.s4.respuestas = c4State.respuestas;
-      guardarSB();
-      renderC4MetaGenerada(fruto, '💛 MANTENER: ' + meta);
-    } catch(e) {
-      var cnt2=document.getElementById('c4-cnt');
-      cnt2.innerHTML='<div style="text-align:center;padding:2rem;color:var(--ro)">Error al generar. Intenta de nuevo.</div>';
-      var btnR=document.createElement('button'); btnR.className='btn btn-s'; btnR.textContent='↺ Reintentar';
-      btnR.onclick=function(){renderC4Mantener(fruto);}; cnt2.appendChild(btnR);
-    }
-  };
-  cnt.appendChild(btnGen);
-
-  var ftr=document.createElement('div'); ftr.className='ftr'; ftr.textContent='Academia Mujer Fénix 40+';
-  cnt.appendChild(ftr);
+function mostrarTyping() {
+  var cnt = document.getElementById('c4-mensajes');
+  var div = document.createElement('div');
+  div.id = 'c4-typing';
+  div.style.cssText = 'display:flex;gap:8px;align-items:center';
+  div.innerHTML = '<div style="width:32px;height:32px;border-radius:50%;background:var(--mo);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🔥</div>' +
+    '<div style="background:var(--mo);border-radius:4px 14px 14px 14px;padding:10px 16px">' +
+    '<div style="display:flex;gap:4px;align-items:center">' +
+    '<div style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.6);animation:blink 1s infinite 0s"></div>' +
+    '<div style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.6);animation:blink 1s infinite .3s"></div>' +
+    '<div style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.6);animation:blink 1s infinite .6s"></div>' +
+    '</div></div>';
+  cnt.appendChild(div);
+  cnt.scrollTop = cnt.scrollHeight;
+  window.scrollTo(0, document.body.scrollHeight);
 }
 
-function renderC4Loading(fruto) {
-  var cnt = document.getElementById('c4-cnt');
-  cnt.innerHTML = '<div style="text-align:center;padding:3rem 1rem"><div style="font-size:36px;margin-bottom:1rem">' + fruto.icon + '</div><div style="font-family:Playfair Display,serif;color:var(--mo);font-size:18px;margin-bottom:.5rem">Construyendo tu meta...</div><div style="font-size:13px;color:var(--su)">La IA está leyendo tus respuestas y<br>creando algo concreto para ti.</div></div>';
+function quitarTyping() {
+  var t = document.getElementById('c4-typing');
+  if (t) t.remove();
 }
 
-function renderC4MetaGenerada(fruto, meta) {
-  var cnt = document.getElementById('c4-cnt');
-  cnt.innerHTML = '';
+function habilitarInput() {
+  var area = document.getElementById('c4-input-area');
+  area.style.display = 'block';
+  setTimeout(function() {
+    var inp = document.getElementById('c4-input');
+    if (inp) inp.focus();
+  }, 100);
+}
 
-  var titulo = document.createElement('div');
-  titulo.style.cssText = 'text-align:center;margin-bottom:1.2rem';
-  titulo.innerHTML = '<div style="font-size:36px;margin-bottom:.5rem">' + fruto.icon + '</div><div style="font-family:Playfair Display,serif;color:var(--mo);font-size:18px">' + fruto.titulo + '</div><div style="font-size:12px;color:var(--su);margin-top:3px">Tu meta a 90 días</div>';
-  cnt.appendChild(titulo);
+function mostrarMeta(meta) {
+  var metaArea = document.getElementById('c4-meta-area');
+  var metaText = document.getElementById('c4-meta-text');
+  var btnSig = document.getElementById('c4-btn-siguiente');
+  var fruto = C4_FRUTOS[c4.frutoIdx];
+  var sigIdx = c4.frutoIdx + 1;
 
-  var metaCard = document.createElement('div');
-  metaCard.style.cssText = 'background:var(--mo);border-radius:14px;padding:1.3rem 1.4rem;margin-bottom:1rem';
-  metaCard.innerHTML = '<div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--do);margin-bottom:.6rem">Tu meta</div><div style="font-family:Playfair Display,serif;font-style:italic;color:white;font-size:14px;line-height:1.75">' + meta + '</div>';
-  cnt.appendChild(metaCard);
-
-  var nota = document.createElement('div');
-  nota.style.cssText = 'font-size:12px;color:var(--su);text-align:center;margin-bottom:1rem';
-  nota.textContent = '¿No refleja exactamente lo que quieres? Puedes editarla.';
-  cnt.appendChild(nota);
-
-  var ta = document.createElement('textarea');
-  ta.id = 'c4-meta-edit';
-  ta.rows = 4;
-  ta.value = meta;
-  ta.style.cssText = 'width:100%;padding:12px;border:1.5px solid var(--ln);border-radius:10px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;resize:none;line-height:1.7;min-height:90px;margin-bottom:.8rem';
-  cnt.appendChild(ta);
-
-  // Siguiente fruto o resumen
-  var sigIdx = c4State.frutoIdx + 1;
-  var btnSig = document.createElement('button');
-  btnSig.className = 'btn btn-p';
+  metaText.value = meta;
+  metaArea.style.display = 'block';
 
   if (sigIdx < C4_FRUTOS.length) {
-    var sigFruto = C4_FRUTOS[sigIdx];
-    btnSig.textContent = 'Continuar con ' + sigFruto.titulo + ' →';
-    btnSig.onclick = function() {
-      var editada = document.getElementById('c4-meta-edit').value.trim();
-      if (editada) { c4State.metas[fruto.key] = editada; D.s4.metas = c4State.metas; guardarSB(); }
-      c4State.frutoIdx = sigIdx;
-      c4State.preguntaIdx = -1;
-      renderC4Pregunta();
-    };
+    btnSig.textContent = 'Guardar y continuar con ' + C4_FRUTOS[sigIdx].titulo + ' →';
   } else {
-    btnSig.textContent = 'Ver mis 6 metas ✦';
-    btnSig.onclick = function() {
-      var editada = document.getElementById('c4-meta-edit').value.trim();
-      if (editada) { c4State.metas[fruto.key] = editada; D.s4.metas = c4State.metas; guardarSB(); }
-      show('s-s4-resumen');
-      renderC4Resumen();
-    };
+    btnSig.textContent = 'Guardar y ver mis 6 metas ✦';
   }
-  cnt.appendChild(btnSig);
+  window.scrollTo(0, document.body.scrollHeight);
+}
 
-  var ftr = document.createElement('div');
-  ftr.className = 'ftr'; ftr.textContent = 'Academia Mujer Fénix 40+';
-  cnt.appendChild(ftr);
+function guardarYSiguienteC4() {
+  var fruto = C4_FRUTOS[c4.frutoIdx];
+  var meta = document.getElementById('c4-meta-text').value.trim();
+  if (meta) c4.metas[fruto.key] = meta;
+
+  if (!D.s4) D.s4 = {};
+  D.s4.metas = c4.metas;
+  guardarSB();
+
+  var sigIdx = c4.frutoIdx + 1;
+  if (sigIdx < C4_FRUTOS.length) {
+    c4.frutoIdx = sigIdx;
+    iniciarFrutoC4();
+  } else {
+    show('s-s4-resumen');
+    renderC4Resumen();
+  }
 }
 
 function renderC4Resumen() {
@@ -1486,67 +1192,67 @@ function renderC4Resumen() {
 
   var hero = document.createElement('div');
   hero.style.cssText = 'background:linear-gradient(135deg,var(--mo),var(--ro));border-radius:18px;padding:1.5rem;text-align:center;margin-bottom:1.2rem';
-  hero.innerHTML = '<div style="font-size:36px;margin-bottom:.5rem">🎯</div><div style="font-family:Playfair Display,serif;color:var(--do);font-size:18px">Mis 6 metas a 90 días</div><div style="font-size:12px;color:rgba(255,255,255,.8);margin-top:.3rem">Una por cada área de tu vida</div>';
+  hero.innerHTML = '<div style="font-size:36px;margin-bottom:.5rem">🎯</div>' +
+    '<div style="font-family:Playfair Display,serif;color:var(--do);font-size:18px">Mis 6 metas a 90 días</div>' +
+    '<div style="font-size:12px;color:rgba(255,255,255,.8);margin-top:.3rem">Escritas en presente — como tu realidad</div>';
   cnt.appendChild(hero);
 
-  C4_FRUTOS.forEach(function(f) {
-    var meta = c4State.metas[f.key] || (D.s4 && D.s4.metas && D.s4.metas[f.key]) || '';
-    if (!meta) return;
+  var metas = (D.s4 && D.s4.metas) ? D.s4.metas : c4.metas;
 
+  C4_FRUTOS.forEach(function(f) {
+    var meta = metas[f.key] || '';
+    if (!meta) return;
     var card = document.createElement('div');
     card.style.cssText = 'background:white;border-radius:14px;padding:1.1rem;margin-bottom:.8rem;border-left:4px solid ' + f.color;
-    card.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:.5rem">' +
+    card.innerHTML =
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:.5rem">' +
       '<span style="font-size:18px">' + f.icon + '</span>' +
       '<div style="font-family:Playfair Display,serif;color:var(--mo);font-size:13px;font-weight:600">' + f.titulo + '</div>' +
       '</div>' +
-      '<div style="font-size:12px;color:var(--tx);line-height:1.7;font-style:italic">' + meta + '</div>';
+      '<div style="font-size:12px;color:var(--tx);line-height:1.75;font-style:italic">' + meta + '</div>';
     cnt.appendChild(card);
   });
 
   // Tiempo por área
-  var tiempoCard = document.createElement('div');
-  tiempoCard.style.cssText = 'background:var(--lv);border-radius:14px;padding:1.1rem;margin-bottom:1rem;border:1.5px solid var(--ln)';
-  tiempoCard.innerHTML = '<div style="font-family:Playfair Display,serif;color:var(--mo);font-size:14px;margin-bottom:.8rem">¿Cuánto tiempo dedicas a cada área?</div><div style="font-size:12px;color:var(--su);margin-bottom:.8rem">Define cuántos minutos por semana quieres dedicar a trabajar en cada FRUTO. Sé realista — empieza con poco y aumenta.</div>';
-
+  var tcard = document.createElement('div');
+  tcard.style.cssText = 'background:var(--lv);border-radius:14px;padding:1.1rem;margin-bottom:1rem;border:1.5px solid var(--ln)';
+  tcard.innerHTML = '<div style="font-family:Playfair Display,serif;color:var(--mo);font-size:14px;margin-bottom:.5rem">¿Cuánto tiempo por área por semana?</div>' +
+    '<div style="font-size:11px;color:var(--su);margin-bottom:.8rem">Empieza con poco — lo importante es ser constante.</div>';
   C4_FRUTOS.forEach(function(f) {
     var saved = D.s4 && D.s4.tiempo && D.s4.tiempo[f.key] ? D.s4.tiempo[f.key] : '';
     var row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:8px';
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:7px';
     row.innerHTML = '<span style="font-size:16px;flex-shrink:0">' + f.icon + '</span>' +
       '<span style="font-size:12px;flex:1;color:var(--tx)">' + f.titulo + '</span>' +
-      '<input type="number" id="tiempo-' + f.key + '" value="' + saved + '" min="0" max="600" placeholder="min/semana" ' +
-      'style="width:90px;padding:6px 8px;border:1.5px solid var(--ln);border-radius:8px;font-family:DM Sans,sans-serif;font-size:12px;color:var(--tx);text-align:center;outline:none">';
-    tiempoCard.appendChild(row);
+      '<input type="number" id="t4-' + f.key + '" value="' + saved + '" min="0" placeholder="min/sem" ' +
+      'style="width:80px;padding:6px 8px;border:1.5px solid var(--ln);border-radius:8px;font-size:12px;text-align:center;outline:none">';
+    tcard.appendChild(row);
   });
-  cnt.appendChild(tiempoCard);
+  cnt.appendChild(tcard);
 
-  var btnGuardar = document.createElement('button');
-  btnGuardar.className = 'btn btn-p';
-  btnGuardar.textContent = 'Guardar mi plan ✦';
-  btnGuardar.onclick = function() {
+  var btnG = document.createElement('button'); btnG.className = 'btn btn-p';
+  btnG.textContent = 'Guardar mi plan ✦';
+  btnG.onclick = function() {
     if (!D.s4) D.s4 = {};
     if (!D.s4.tiempo) D.s4.tiempo = {};
     C4_FRUTOS.forEach(function(f) {
-      var el = document.getElementById('tiempo-' + f.key);
+      var el = document.getElementById('t4-' + f.key);
       if (el) D.s4.tiempo[f.key] = el.value;
     });
     guardarSB();
-    btnGuardar.textContent = '✓ Guardado';
-    setTimeout(function() { btnGuardar.textContent = 'Guardar mi plan ✦'; }, 2000);
+    btnG.textContent = '✓ Guardado';
+    setTimeout(function() { btnG.textContent = 'Guardar mi plan ✦'; }, 2000);
   };
-  cnt.appendChild(btnGuardar);
+  cnt.appendChild(btnG);
 
-  var btnVolver = document.createElement('button');
-  btnVolver.className = 'btn btn-s';
-  btnVolver.style.marginTop = '.5rem';
-  btnVolver.textContent = '← Volver al inicio';
-  btnVolver.onclick = function() { show('s-inicio'); };
-  cnt.appendChild(btnVolver);
+  var btnV = document.createElement('button'); btnV.className = 'btn btn-s'; btnV.style.marginTop = '.5rem';
+  btnV.textContent = '← Volver al inicio'; btnV.onclick = function() { show('s-inicio'); };
+  cnt.appendChild(btnV);
 
-  var ftr = document.createElement('div');
-  ftr.className = 'ftr'; ftr.textContent = 'Academia Mujer Fénix 40+';
+  var ftr = document.createElement('div'); ftr.className = 'ftr'; ftr.textContent = 'Academia Mujer Fénix 40+';
   cnt.appendChild(ftr);
 }
+
 
 // ── UTILIDADES ──
 function show(id) {
@@ -1779,46 +1485,60 @@ function show(id) {
       <div class="sesion-titulo">Mis metas a 90 días</div>
       <div class="sesion-sub">De la visión a metas concretas — una por cada área de tu vida.</div>
     </div>
-
     <div class="card">
-      <div class="card-tit">De la visión a la ruta</div>
-      <div class="card-txt">Ya tienes tu visión de vida escrita en presente. Ahora vamos a aterrizar cada área en una <strong>meta concreta y medible</strong> que puedas trabajar en los próximos 90 días.<br><br>
-      Si tu meta requiere más tiempo, la dividiremos en etapas — y definiremos qué logras en esta primera etapa de 90 días.</div>
+      <div class="card-tit">¿Cómo funciona?</div>
+      <div class="card-txt">Vamos a trabajar área por área. Para cada FRUTO, una coach IA va a conversar contigo — hacerte preguntas, escucharte y ayudarte a aterrizar lo que quieres en algo concreto y medible a 90 días.<br><br>
+      No es un formulario. Es una conversación. Responde como si hablaras con tu coach.</div>
     </div>
-
     <div class="principio" style="text-align:left">
-      <div class="principio-label">Cómo funciona</div>
-      <div style="font-size:13px;color:rgba(255,255,255,.9);line-height:1.85;margin-top:.3rem">
-        Para cada FRUTO, voy a hacerte <strong style="color:var(--do)">3 preguntas</strong> que irán aterrizando lo que escribiste en algo concreto y medible.<br><br>
-        No hay respuestas correctas ni incorrectas. Solo tuyas.
+      <div class="principio-label">Recuerda</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.9);line-height:1.8;margin-top:.3rem">
+        Las metas se escriben en <strong style="color:var(--do)">presente</strong> — como si ya ocurrieran.<br>
+        <em style="color:rgba(255,255,255,.75)">"Tengo", "disfruto", "gano", "siento", "comparto"...</em><br><br>
+        Si ya estás bien en un área, la coach te ayuda a definir cómo la cuidas.
       </div>
     </div>
-
-    <div class="card-do">
-      <strong>Ejemplo:</strong><br><br>
-      Si en Finanzas escribiste <em>"quiero sentirme merecedora del dinero"</em>, te preguntaré: ¿cómo se vería eso en concreto? ¿Cuánto gastarías en ti sin culpa? ¿Cada cuánto?<br><br>
-      Hasta que tengamos algo como: <em>"Destinar $50.000 mensuales solo para mí, sin tener que justificarlo."</em>
-    </div>
-
-    <button class="btn btn-p" onclick="iniciarC4()">Comenzar mis metas →</button>
+    <button class="btn btn-p" onclick="iniciarC4()">Comenzar →</button>
     <div class="ftr">Academia Mujer Fénix 40+</div>
   </div>
 </div>
 
-<!-- ══ CUADERNO 4: EJERCICIO ══ -->
-<div class="screen" id="s-s4-ejercicio">
+<!-- ══ CUADERNO 4: CHAT ══ -->
+<div class="screen" id="s-s4-chat">
   <div class="hdr">
     <button class="bk" onclick="show('s-s4-contexto')">←</button>
-    <div><div class="hdr-logo" id="c4-hdr-logo">Cuaderno 4</div><div class="hdr-sub" id="c4-hdr-sub">Mis metas a 90 días</div></div>
+    <div><div class="hdr-logo" id="c4-chat-titulo">Cuaderno 4</div><div class="hdr-sub" id="c4-chat-sub">Conversación con tu coach</div></div>
   </div>
-  <div class="cnt" id="c4-cnt"></div>
+  <div class="cnt">
+    <!-- Progress bar -->
+    <div id="c4-progress" style="display:flex;gap:5px;margin-bottom:1rem"></div>
+    <!-- Fruto header -->
+    <div id="c4-fruto-hdr" style="margin-bottom:1rem"></div>
+    <!-- Chat messages -->
+    <div id="c4-mensajes" style="display:flex;flex-direction:column;gap:.8rem;margin-bottom:1rem"></div>
+    <!-- Input area -->
+    <div id="c4-input-area" style="display:none">
+      <textarea id="c4-input" rows="3" placeholder="Escribe tu respuesta aquí..." style="width:100%;padding:11px 13px;border:1.5px solid var(--ln);border-radius:10px;font-family:DM Sans,sans-serif;font-size:13px;color:var(--tx);background:white;outline:none;resize:none;line-height:1.65"></textarea>
+      <button class="btn btn-p" onclick="enviarRespuestaC4()" style="margin-top:.5rem">Enviar →</button>
+    </div>
+    <!-- Meta generada -->
+    <div id="c4-meta-area" style="display:none">
+      <div class="card" style="border:1.5px solid var(--do)">
+        <div class="card-tit">✦ Tu meta a 90 días</div>
+        <textarea id="c4-meta-text" rows="4" style="width:100%;padding:10px;border:1.5px solid var(--ln);border-radius:9px;font-family:Playfair Display,serif;font-size:13px;color:var(--tx);background:var(--ll);outline:none;resize:none;line-height:1.8"></textarea>
+        <div style="font-size:11px;color:var(--su);margin-top:.5rem">Puedes editarla si quieres ajustar algo.</div>
+      </div>
+      <button class="btn btn-p" id="c4-btn-siguiente" onclick="guardarYSiguienteC4()">Continuar →</button>
+    </div>
+    <div class="ftr">Academia Mujer Fénix 40+</div>
+  </div>
 </div>
 
 <!-- ══ CUADERNO 4: RESUMEN ══ -->
 <div class="screen" id="s-s4-resumen">
   <div class="hdr">
-    <button class="bk" onclick="show('s-s4-ejercicio')">←</button>
-    <div><div class="hdr-logo">Cuaderno 4</div><div class="hdr-sub">Mis 6 metas a 90 días</div></div>
+    <button class="bk" onclick="show('s-inicio')">←</button>
+    <div><div class="hdr-logo">Mis 6 metas</div><div class="hdr-sub">Cuaderno 4</div></div>
   </div>
   <div class="cnt" id="c4-resumen-cnt"></div>
 </div>
