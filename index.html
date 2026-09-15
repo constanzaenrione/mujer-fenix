@@ -526,9 +526,10 @@ async function cargarSB() {
       D.s2 = res.data.data.s2 || {};
       D.s3 = res.data.data.s3 || {};
       D.s4 = res.data.data.s4 || {};
+      if (D.s4) { c4.metas = D.s4.metas || {}; c4.planes = D.s4.planes || {}; }
     }
   } catch(e) {
-    try { var loc = localStorage.getItem('mf40_cuaderno'); if (loc) { var p = JSON.parse(loc); D.nombre = p.nombre||''; D.caracts = p.caracts||[]; D.s2 = p.s2||{}; D.s3 = p.s3||{}; D.s4 = p.s4||{}; } } catch(e2) {}
+    try { var loc = localStorage.getItem('mf40_cuaderno'); if (loc) { var p = JSON.parse(loc); D.nombre = p.nombre||''; D.caracts = p.caracts||[]; D.s2 = p.s2||{}; D.s3 = p.s3||{}; D.s4 = p.s4||{}; if (D.s4) { c4.metas = D.s4.metas||{}; c4.planes = D.s4.planes||{}; } } } catch(e2) {}
   }
 }
 
@@ -1008,7 +1009,10 @@ function renderC4Selector() {
 
 function iniciarFrutoC4() {
   var fruto = C4_FRUTOS[c4.frutoIdx];
-  c4.historial = [];
+  // Restore saved historial if exists
+  var saved = D.s4 && D.s4.historiales && D.s4.historiales[fruto.key];
+  c4.historial = saved ? saved.slice() : [];
+  c4.planes = (D.s4 && D.s4.planes) || {};
 
   // Update header
   document.getElementById('c4-chat-titulo').textContent = fruto.titulo;
@@ -1035,13 +1039,34 @@ function iniciarFrutoC4() {
     fruto.letra + ' — ' + fruto.titulo + '</div>' +
     '<div style="font-size:11px;color:var(--su);margin-top:2px">Área ' + (c4.frutoIdx+1) + ' de ' + C4_FRUTOS.length + '</div></div></div>';
 
-  // Clear chat and meta
+  // Clear UI
   document.getElementById('c4-mensajes').innerHTML = '';
   document.getElementById('c4-input-area').style.display = 'none';
   document.getElementById('c4-meta-area').style.display = 'none';
 
-  // Start conversation
-  primeraPreguntaC4(fruto);
+  // Restore existing conversation if present
+  if (c4.historial.length > 0) {
+    c4.historial.forEach(function(msg) {
+      // Skip GENERAR_PLAN messages from display
+      if (msg.content.indexOf('GENERAR_PLAN:') >= 0) return;
+      mostrarMensaje(msg.content, msg.role === 'assistant' ? 'coach' : 'usuaria');
+    });
+    // Check if last message was a plan
+    var lastMsg = c4.historial[c4.historial.length - 1];
+    var planGuardado = c4.planes && c4.planes[fruto.key];
+    if (planGuardado) {
+      mostrarMensaje('Aquí está el plan que definimos. Puedes editarlo si quieres ajustar algo.', 'coach');
+      var planText = 'METAS: ' + planGuardado.metas.join(' | ') +
+        ' HABITOS: ' + planGuardado.habitos.join(' | ') +
+        ' DEJAR: ' + planGuardado.dejar.join(' | ');
+      mostrarPlan(planText);
+    } else {
+      habilitarInput();
+    }
+  } else {
+    // Start fresh conversation
+    primeraPreguntaC4(fruto);
+  }
 }
 
 async function primeraPreguntaC4(fruto) {
@@ -1115,10 +1140,12 @@ function buildSysPrompt(fruto) {
     '¿cómo se vería eso en tu día a día? ¿qué cambiaría concreto? ¿qué número o frecuencia? ' +
     '¿cómo conecta eso con quién eres? ¿ya lo tienes y solo quieres cuidarlo? ' +
     '¿es alcanzable en 90 días o necesitas definir una etapa? ' +
-    'Cuando tengas suficiente claridad (máximo 5 intercambios), escribe exactamente: ' +
-    'GENERAR_META: seguido de la meta o acción concreta en primera persona y en PRESENTE ' +
-    '(tengo, disfruto, gano, siento, hago, comparto, ahorró, dedico...). ' +
-    'Que sea específica, medible y conectada con su visión. Sin markdown. Sin asteriscos. Español con tildes.';
+    'Cuando tengas suficiente claridad (máximo 5-6 intercambios), escribe exactamente: ' +
+    'GENERAR_PLAN: seguido de un bloque con este formato exacto (sin markdown, sin asteriscos): ' +
+    'METAS: [una o más metas en presente, separadas por | ] ' +
+    'HABITOS: [mínimo 3 acciones concretas a instaurar como hábito, separadas por | ] ' +
+    'DEJAR: [al menos 1 cosa concreta a dejar o soltar para lograrlo] ' +
+    'Todo en primera persona presente. Específico y medible. Español con tildes.';
 }
 
 async function enviarRespuestaC4() {
@@ -1130,6 +1157,8 @@ async function enviarRespuestaC4() {
 
   mostrarMensaje(texto, 'usuaria');
   c4.historial.push({ role: 'user', content: texto });
+  // AUTO-SAVE after every user message
+  guardarHistorialC4();
 
   mostrarTyping();
   var fruto = C4_FRUTOS[c4.frutoIdx];
@@ -1140,18 +1169,29 @@ async function enviarRespuestaC4() {
 
   if (!respuesta) { habilitarInput(); return; }
 
-  // Check if IA wants to generate meta
-  if (respuesta.indexOf('GENERAR_META:') >= 0) {
-    var meta = respuesta.replace(/GENERAR_META:\s*/i, '').trim();
+  if (respuesta.indexOf('GENERAR_PLAN:') >= 0) {
+    var plan = respuesta.replace(/GENERAR_PLAN:\s*/i, '').trim();
     c4.historial.push({ role: 'assistant', content: respuesta });
-    // Show confirmation message before meta
-    mostrarMensaje('Perfecto. Con todo lo que me contaste, aquí está tu meta:', 'coach');
-    mostrarMeta(meta);
+    guardarHistorialC4();
+    mostrarMensaje('Perfecto. Aquí está tu plan de acción para esta área:', 'coach');
+    mostrarPlan(plan);
   } else {
     c4.historial.push({ role: 'assistant', content: respuesta });
+    guardarHistorialC4();
     mostrarMensaje(respuesta, 'coach');
     habilitarInput();
   }
+}
+
+function guardarHistorialC4() {
+  if (!D.s4) D.s4 = {};
+  if (!D.s4.historiales) D.s4.historiales = {};
+  var fruto = C4_FRUTOS[c4.frutoIdx];
+  D.s4.historiales[fruto.key] = c4.historial;
+  // Also save current plan/metas
+  if (c4.metas) D.s4.metas = c4.metas;
+  if (c4.planes) D.s4.planes = c4.planes;
+  guardarSB();
 }
 
 async function llamarIA(sys, usr, historial) {
@@ -1238,32 +1278,147 @@ function habilitarInput() {
   }, 100);
 }
 
-function mostrarMeta(meta) {
-  var metaArea = document.getElementById('c4-meta-area');
-  var metaText = document.getElementById('c4-meta-text');
-  var btnSig = document.getElementById('c4-btn-siguiente');
+function parsePlan(planText) {
+  var result = { metas: [], habitos: [], dejar: [] };
+  var metasMatch = planText.match(/METAS:\s*([^]+?)(?=HABITOS:|$)/i);
+  var habitosMatch = planText.match(/HABITOS:\s*([^]+?)(?=DEJAR:|$)/i);
+  var dejarMatch = planText.match(/DEJAR:\s*([^]+?)$/i);
+  if (metasMatch) result.metas = metasMatch[1].split('|').map(function(s){return s.trim();}).filter(Boolean);
+  if (habitosMatch) result.habitos = habitosMatch[1].split('|').map(function(s){return s.trim();}).filter(Boolean);
+  if (dejarMatch) result.dejar = dejarMatch[1].split('|').map(function(s){return s.trim();}).filter(Boolean);
+  // Fallback: if parsing fails, treat whole text as one meta
+  if (!result.metas.length) result.metas = [planText];
+  return result;
+}
+
+function mostrarPlan(planText) {
   var fruto = C4_FRUTOS[c4.frutoIdx];
   var sigIdx = c4.frutoIdx + 1;
+  var plan = parsePlan(planText);
 
-  metaText.value = meta;
+  // Save plan immediately
+  if (!c4.planes) c4.planes = {};
+  c4.planes[fruto.key] = plan;
+  if (!c4.metas) c4.metas = {};
+  c4.metas[fruto.key] = plan.metas.join(' | ');
+  guardarHistorialC4();
+
+  var metaArea = document.getElementById('c4-meta-area');
+  metaArea.innerHTML = '';
   metaArea.style.display = 'block';
 
-  if (sigIdx < C4_FRUTOS.length) {
-    btnSig.textContent = 'Guardar y continuar con ' + C4_FRUTOS[sigIdx].titulo + ' →';
-  } else {
-    btnSig.textContent = 'Guardar y ver mis 6 metas ✦';
-  }
+  // METAS section
+  var metasDiv = document.createElement('div');
+  metasDiv.style.cssText = 'background:var(--mo);border-radius:14px;padding:1.1rem;margin-bottom:.8rem';
+  metasDiv.innerHTML = '<div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--do);margin-bottom:.5rem">MIS METAS</div>';
+  plan.metas.forEach(function(m, i) {
+    var ta = document.createElement('textarea');
+    ta.className = 'c4-meta-input';
+    ta.dataset.idx = i;
+    ta.value = m;
+    ta.rows = 2;
+    ta.style.cssText = 'width:100%;padding:8px 10px;border:none;border-radius:8px;font-family:Playfair Display,serif;font-size:12px;color:var(--tx);background:rgba(255,255,255,.95);outline:none;resize:none;line-height:1.65;margin-bottom:5px';
+    metasDiv.appendChild(ta);
+  });
+  // Add meta button
+  var btnAddMeta = document.createElement('button');
+  btnAddMeta.style.cssText = 'background:rgba(255,255,255,.2);color:white;border:1px dashed rgba(255,255,255,.5);border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;margin-top:3px';
+  btnAddMeta.textContent = '+ Agregar otra meta';
+  btnAddMeta.onclick = function() {
+    var ta2 = document.createElement('textarea');
+    ta2.className = 'c4-meta-input';
+    ta2.rows = 2; ta2.placeholder = 'Escribe otra meta en presente...';
+    ta2.style.cssText = 'width:100%;padding:8px 10px;border:none;border-radius:8px;font-family:Playfair Display,serif;font-size:12px;color:var(--tx);background:rgba(255,255,255,.95);outline:none;resize:none;line-height:1.65;margin-bottom:5px;margin-top:5px';
+    metasDiv.insertBefore(ta2, btnAddMeta);
+  };
+  metasDiv.appendChild(btnAddMeta);
+  metaArea.appendChild(metasDiv);
+
+  // HÁBITOS section
+  var habDiv = document.createElement('div');
+  habDiv.style.cssText = 'background:white;border-radius:14px;padding:1.1rem;margin-bottom:.8rem;border:1.5px solid var(--ln)';
+  habDiv.innerHTML = '<div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mo);margin-bottom:.6rem;font-weight:600">🔁 Hábitos a instaurar</div>';
+  plan.habitos.forEach(function(h, i) {
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin-bottom:6px';
+    row.innerHTML = '<div style="width:18px;height:18px;border-radius:50%;background:var(--mo);color:white;font-size:9px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">'+(i+1)+'</div>';
+    var ta = document.createElement('textarea');
+    ta.className = 'c4-hab-input';
+    ta.value = h; ta.rows = 1;
+    ta.style.cssText = 'flex:1;padding:6px 8px;border:1.5px solid var(--ln);border-radius:8px;font-family:DM Sans,sans-serif;font-size:12px;color:var(--tx);outline:none;resize:none;line-height:1.5';
+    row.appendChild(ta); habDiv.appendChild(row);
+  });
+  var btnAddHab = document.createElement('button');
+  btnAddHab.style.cssText = 'border:1px dashed var(--ln);background:var(--ll);color:var(--su);border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;margin-top:3px';
+  btnAddHab.textContent = '+ Agregar hábito';
+  btnAddHab.onclick = function() {
+    var row2 = document.createElement('div'); row2.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;margin-top:5px';
+    var n = habDiv.querySelectorAll('.c4-hab-input').length + 1;
+    row2.innerHTML = '<div style="width:18px;height:18px;border-radius:50%;background:var(--mo);color:white;font-size:9px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">'+n+'</div>';
+    var ta3 = document.createElement('textarea'); ta3.className = 'c4-hab-input'; ta3.rows = 1; ta3.placeholder = 'Nuevo hábito...';
+    ta3.style.cssText = 'flex:1;padding:6px 8px;border:1.5px solid var(--ln);border-radius:8px;font-family:DM Sans,sans-serif;font-size:12px;color:var(--tx);outline:none;resize:none;line-height:1.5';
+    row2.appendChild(ta3); habDiv.insertBefore(row2, btnAddHab);
+  };
+  habDiv.appendChild(btnAddHab);
+  metaArea.appendChild(habDiv);
+
+  // DEJAR section
+  var dejarDiv = document.createElement('div');
+  dejarDiv.style.cssText = 'background:white;border-radius:14px;padding:1.1rem;margin-bottom:.8rem;border:1.5px solid var(--ln)';
+  dejarDiv.innerHTML = '<div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ro);margin-bottom:.6rem;font-weight:600">🍂 Lo que dejo atrás</div>';
+  plan.dejar.forEach(function(d) {
+    var ta = document.createElement('textarea');
+    ta.className = 'c4-dejar-input'; ta.value = d; ta.rows = 1;
+    ta.style.cssText = 'width:100%;padding:6px 8px;border:1.5px solid var(--ln);border-radius:8px;font-family:DM Sans,sans-serif;font-size:12px;color:var(--tx);outline:none;resize:none;line-height:1.5;margin-bottom:5px';
+    dejarDiv.appendChild(ta);
+  });
+  var btnAddDejar = document.createElement('button');
+  btnAddDejar.style.cssText = 'border:1px dashed var(--ln);background:var(--ll);color:var(--su);border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;margin-top:3px';
+  btnAddDejar.textContent = '+ Agregar';
+  btnAddDejar.onclick = function() {
+    var ta4 = document.createElement('textarea'); ta4.className = 'c4-dejar-input'; ta4.rows = 1; ta4.placeholder = 'Algo que suelto...';
+    ta4.style.cssText = 'width:100%;padding:6px 8px;border:1.5px solid var(--ln);border-radius:8px;font-family:DM Sans,sans-serif;font-size:12px;color:var(--tx);outline:none;resize:none;line-height:1.5;margin-bottom:5px;margin-top:5px';
+    dejarDiv.insertBefore(ta4, btnAddDejar);
+  };
+  dejarDiv.appendChild(btnAddDejar);
+  metaArea.appendChild(dejarDiv);
+
+  var nota = document.createElement('div');
+  nota.style.cssText = 'font-size:11px;color:var(--su);text-align:center;margin-bottom:.8rem';
+  nota.textContent = 'Puedes editar cualquier parte antes de guardar.';
+  metaArea.appendChild(nota);
+
+  var btnSig = document.createElement('button'); btnSig.className = 'btn btn-p';
+  btnSig.textContent = sigIdx < C4_FRUTOS.length
+    ? 'Guardar y continuar con ' + C4_FRUTOS[sigIdx].titulo + ' →'
+    : 'Guardar y ver mi plan completo ✦';
+  btnSig.onclick = function() { guardarYSiguienteC4(); };
+  metaArea.appendChild(btnSig);
+
   window.scrollTo(0, document.body.scrollHeight);
 }
 
+function mostrarMeta(meta) { mostrarPlan('METAS: ' + meta + ' HABITOS:  DEJAR: '); }
+
 function guardarYSiguienteC4() {
   var fruto = C4_FRUTOS[c4.frutoIdx];
-  var meta = document.getElementById('c4-meta-text').value.trim();
-  if (meta) c4.metas[fruto.key] = meta;
+
+  // Read edited metas
+  var metas = Array.from(document.querySelectorAll('.c4-meta-input'))
+    .map(function(ta){return ta.value.trim();}).filter(Boolean);
+  var habitos = Array.from(document.querySelectorAll('.c4-hab-input'))
+    .map(function(ta){return ta.value.trim();}).filter(Boolean);
+  var dejar = Array.from(document.querySelectorAll('.c4-dejar-input'))
+    .map(function(ta){return ta.value.trim();}).filter(Boolean);
+
+  if (!c4.planes) c4.planes = {};
+  c4.planes[fruto.key] = { metas: metas, habitos: habitos, dejar: dejar };
+  c4.metas[fruto.key] = metas.join(' | ');
 
   if (!D.s4) D.s4 = {};
   D.s4.metas = c4.metas;
-  guardarSB();
+  D.s4.planes = c4.planes;
+  guardarHistorialC4();
 
   var sigIdx = c4.frutoIdx + 1;
   if (sigIdx < C4_FRUTOS.length) {
@@ -1288,17 +1443,38 @@ function renderC4Resumen() {
 
   var metas = (D.s4 && D.s4.metas) ? D.s4.metas : c4.metas;
 
+  var planes = (D.s4 && D.s4.planes) || c4.planes || {};
+
   C4_FRUTOS.forEach(function(f) {
     var meta = metas[f.key] || '';
     if (!meta) return;
+    var plan = planes[f.key] || {};
     var card = document.createElement('div');
     card.style.cssText = 'background:white;border-radius:14px;padding:1.1rem;margin-bottom:.8rem;border-left:4px solid ' + f.color;
-    card.innerHTML =
-      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:.5rem">' +
+    var inner = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:.6rem">' +
       '<span style="font-size:18px">' + f.icon + '</span>' +
       '<div style="font-family:Playfair Display,serif;color:var(--mo);font-size:13px;font-weight:600">' + f.titulo + '</div>' +
-      '</div>' +
-      '<div style="font-size:12px;color:var(--tx);line-height:1.75;font-style:italic">' + meta + '</div>';
+      '</div>';
+    // Metas
+    var metaList = plan.metas ? plan.metas : [meta];
+    metaList.forEach(function(m) {
+      if (m) inner += '<div style="font-size:12px;color:var(--tx);line-height:1.7;font-style:italic;margin-bottom:3px">✦ ' + m + '</div>';
+    });
+    // Habitos
+    if (plan.habitos && plan.habitos.length) {
+      inner += '<div style="font-size:10px;font-weight:600;color:var(--mo);letter-spacing:.5px;margin:8px 0 4px">🔁 HÁBITOS</div>';
+      plan.habitos.forEach(function(h) {
+        if (h) inner += '<div style="font-size:11px;color:var(--su);line-height:1.6;margin-bottom:2px">· ' + h + '</div>';
+      });
+    }
+    // Dejar
+    if (plan.dejar && plan.dejar.length) {
+      inner += '<div style="font-size:10px;font-weight:600;color:var(--ro);letter-spacing:.5px;margin:8px 0 4px">🍂 DEJAR</div>';
+      plan.dejar.forEach(function(d) {
+        if (d) inner += '<div style="font-size:11px;color:var(--su);line-height:1.6;margin-bottom:2px">· ' + d + '</div>';
+      });
+    }
+    card.innerHTML = inner;
     cnt.appendChild(card);
   });
 
