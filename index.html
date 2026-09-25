@@ -442,7 +442,7 @@ var sb = null;
 function initSB() { try { sb = window.supabase.createClient(SURL, SKEY); return true; } catch(e) { return false; } }
 
 // ── ESTADO ──
-var D = { nombre: '', caracts: [], s2: {}, s3: {}, s4: {} };
+var D = { nombre: '', caracts: [], s2: {}, s3: {}, s4: {}, s5: {} };
 var authMode = 'in';
 
 // ── AUTH ──
@@ -527,9 +527,10 @@ async function cargarSB() {
       D.s3 = res.data.data.s3 || {};
       D.s4 = res.data.data.s4 || {};
       if (D.s4) { c4.metas = D.s4.metas || {}; c4.planes = D.s4.planes || {}; }
+      D.s5 = res.data.data.s5 || {};
     }
   } catch(e) {
-    try { var loc = localStorage.getItem('mf40_cuaderno'); if (loc) { var p = JSON.parse(loc); D.nombre = p.nombre||''; D.caracts = p.caracts||[]; D.s2 = p.s2||{}; D.s3 = p.s3||{}; D.s4 = p.s4||{}; if (D.s4) { c4.metas = D.s4.metas||{}; c4.planes = D.s4.planes||{}; } } } catch(e2) {}
+    try { var loc = localStorage.getItem('mf40_cuaderno'); if (loc) { var p = JSON.parse(loc); D.nombre = p.nombre||''; D.caracts = p.caracts||[]; D.s2 = p.s2||{}; D.s3 = p.s3||{}; D.s4 = p.s4||{}; if (D.s4) { c4.metas = D.s4.metas||{}; c4.planes = D.s4.planes||{}; } D.s5 = p.s5||{}; } } catch(e2) {}
   }
 }
 
@@ -549,7 +550,8 @@ var SESIONES = [
   { id: 's1', num: '1', titulo: 'Una nueva etapa comienza', desc: 'Recuerda quién eres', icono: '🌱', activa: true },
   { id: 's2', num: '2', titulo: 'Los frutos de la vida que quiero cultivar', desc: '¿Qué quiero para cada área de mi vida?', icono: '🌿', activa: true },
   { id: 's3', num: '3', titulo: 'Mi visión de vida', desc: 'Cómo se ve mi vida ya realizada — en presente', icono: '✨', activa: true },
-  { id: 's4', num: '4', titulo: 'Mis metas a 90 días', desc: 'De la visión a metas concretas por área', icono: '🎯', activa: true }
+  { id: 's4', num: '4', titulo: 'Mis metas a 90 días', desc: 'De la visión a metas concretas por área', icono: '🎯', activa: true },
+  { id: 's5', num: '5', titulo: 'Fugas de energía', desc: 'Identifica qué te drena y empieza a sellar las fugas', icono: '⚡', activa: true }
 ];
 
 function renderSesiones() {
@@ -847,7 +849,11 @@ show = function(id) {
   if (id === 's-s2-ejercicio') renderFrutosS2();
   if (id === 's-s2-abecedario') renderAbecedario();
   if (id === 's-s3-ejercicio') initS3();
-  if (id === 's-s4-resumen') { c4.metas = (D.s4 && D.s4.metas) || {}; renderC4Resumen(); }
+  if (id === 's-s4-selector') { c4.metas = (D.s4 && D.s4.metas) || {}; c4.planes = (D.s4 && D.s4.planes) || {}; renderC4Selector(); }
+  if (id === 's-s4-resumen') { c4.metas = (D.s4 && D.s4.metas) || {}; c4.planes = (D.s4 && D.s4.planes) || {}; renderC4Resumen(); }
+  if (id === 's-s5-fugas') initC5();
+  if (id === 's-s5-sellos') renderC5Sellos();
+  if (id === 's-s5-resumen') renderC5Resumen();
 };
 
 
@@ -948,17 +954,20 @@ var c4 = {
 function iniciarC4() {
   if (!D.s4) D.s4 = {};
   c4.metas = D.s4.metas || {};
+  c4.planes = D.s4.planes || {};
   c4.respondido = D.s4.respondido || {};
   // Always show fruto selector first
   show('s-s4-selector');
-  renderC4Selector();
 }
 
 function renderC4Selector() {
   var cnt = document.getElementById('c4-selector-cnt');
   cnt.innerHTML = '';
 
-  var metas = c4.metas;
+  // Always sync from D.s4 to ensure loaded data is reflected
+  if (D.s4 && D.s4.metas) c4.metas = D.s4.metas;
+  if (D.s4 && D.s4.planes) c4.planes = D.s4.planes;
+  var metas = c4.metas || {};
   var todasListas = C4_FRUTOS.every(function(f) { return !!metas[f.key]; });
 
   // Hero
@@ -1541,6 +1550,265 @@ function show(id) {
     });
   } else { show('s-auth'); }
 })();
+
+// ══════════════════════════════════════════════════════════════
+// ── CUADERNO 5: FUGAS DE ENERGÍA ──
+// ══════════════════════════════════════════════════════════════
+
+var C5_CATEGORIAS = [
+  {
+    key: 'mental',
+    label: 'Mental',
+    icono: '🧠',
+    color: '#8B5CF6',
+    desc: 'Lo que ocupa espacio en tu cabeza',
+    ejemplos: ['Pensar demasiado', 'Proyectos sin cerrar en la mente', 'Preocuparte por lo que puede pasar', 'Culpa constante', 'Darle vueltas a conversaciones del pasado']
+  },
+  {
+    key: 'domestico',
+    label: 'Doméstico',
+    icono: '🏠',
+    color: '#F59E0B',
+    desc: 'Las tareas y decisiones del hogar',
+    ejemplos: ['Decidir qué cocinar cada día', 'Cargar sola con la organización del hogar', 'Ser la "administradora" de todo', 'Recordar las cosas de todos', 'Hacer todo porque "yo lo hago mejor"']
+  },
+  {
+    key: 'relacional',
+    label: 'Relacional',
+    icono: '👥',
+    color: '#EC4899',
+    desc: 'Lo que das y lo que no pides',
+    ejemplos: ['Repetir instrucciones a los demás', 'No aceptar ayuda cuando te la ofrecen', 'Obligaciones que te impones tú sola', 'Decir sí cuando quieres decir no', 'Responsabilizarte de las emociones de otros']
+  },
+  {
+    key: 'emocional',
+    label: 'Emocional',
+    icono: '💛',
+    color: '#10B981',
+    desc: 'Cómo te tratas a ti misma',
+    ejemplos: ['Autocrítica constante', 'Perfeccionismo ("las cosas se hacen bien o no se hacen")', 'No aceptar hacer las cosas "imperfecto"', 'Exigirte más de lo que le exiges a otros', 'Culparte cuando las cosas no salen perfectas']
+  }
+];
+
+var C5_SELLOS = [
+  { key: 'menu', label: 'Planificación semanal', icono: '📋', desc: 'Decidir el menú o las tareas de la semana entera de una vez (no cada día)' },
+  { key: 'lista', label: 'Lista priorizada', icono: '✅', desc: 'Una lista donde lo que no se hace hoy, simplemente pasa a mañana — sin culpa' },
+  { key: 'delegar', label: 'Delegar con fecha', icono: '🤝', desc: 'Asignar una tarea específica a alguien, con una fecha clara de cuándo debe estar lista' },
+  { key: 'rutina', label: 'Crear una rutina', icono: '🔄', desc: 'Poner en "piloto automático" las decisiones repetitivas (desayuno, horarios, etc.)' },
+  { key: 'imperfecto', label: 'Aceptar lo imperfecto', icono: '💛', desc: 'Dejar que otros ayuden aunque no lo hagan exactamente como tú lo harías' },
+  { key: 'enfoque', label: 'Un proyecto por día', icono: '🎯', desc: 'En vez de pensar en todos tus proyectos a la vez, dedicar cada día a uno solo' },
+  { key: 'mantra', label: 'El mantra "tiene sentido"', icono: '🌿', desc: '"Tiene sentido que no lo haya logrado porque..." — para soltar la culpa cuando no cumples' },
+  { key: 'autocompasion', label: 'Autocompasión activa', icono: '🔥', desc: '"Haga o no haga esto, no cambia lo maravillosa que soy" — repetirlo en voz alta cuando te exiges demasiado' }
+];
+
+var c5 = { fugas: {}, sellos: {}, compromiso: '' };
+
+function iniciarC5() {
+  if (!D.s5) D.s5 = {};
+  c5.fugas = D.s5.fugas || {};
+  c5.sellos = D.s5.sellos || {};
+  c5.compromiso = D.s5.compromiso || '';
+  show('s-s5-fugas');
+}
+
+function initC5() {
+  if (D.s5 && D.s5.fugas) c5.fugas = D.s5.fugas;
+  if (D.s5 && D.s5.sellos) c5.sellos = D.s5.sellos;
+  if (D.s5 && D.s5.compromiso) c5.compromiso = D.s5.compromiso;
+  renderC5Fugas();
+}
+
+function renderC5Fugas() {
+  var cnt = document.getElementById('c5-fugas-cnt');
+  if (!cnt) return;
+  var html = '';
+  C5_CATEGORIAS.forEach(function(cat) {
+    var fugas = (c5.fugas[cat.key] && c5.fugas[cat.key].lista) || [];
+    html += '<div class="card" style="border-left:3px solid ' + cat.color + ';margin-bottom:1rem">';
+    html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">';
+    html += '<span style="font-size:1.4rem">' + cat.icono + '</span>';
+    html += '<div><div class="card-tit" style="margin:0;color:' + cat.color + '">' + cat.label + '</div>';
+    html += '<div style="font-size:11px;color:var(--su);margin-top:1px">' + cat.desc + '</div></div></div>';
+
+    // Ejemplos como chips clicables
+    html += '<div style="font-size:11px;color:var(--su);margin-bottom:.4rem">Elige las que te resuenan (o escribe las tuyas):</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.6rem">';
+    cat.ejemplos.forEach(function(ej) {
+      var sel = fugas.indexOf(ej) >= 0;
+      html += '<span onclick="toggleFuga(\'' + cat.key + '\',this,\'' + ej.replace(/'/g, "\\'") + '\')" style="cursor:pointer;padding:.3rem .6rem;border-radius:20px;font-size:11px;border:1.5px solid ' + cat.color + ';background:' + (sel ? cat.color : 'transparent') + ';color:' + (sel ? '#fff' : cat.color) + ';transition:all .2s">' + ej + '</span>';
+    });
+    html += '</div>';
+
+    // Input para agregar fuga propia
+    html += '<div style="display:flex;gap:.4rem;margin-top:.4rem">';
+    html += '<input id="c5-input-' + cat.key + '" placeholder="Agregar otra..." style="flex:1;padding:.45rem .7rem;border:1.5px solid var(--ln);border-radius:8px;font-size:12px;color:var(--tx);background:var(--ll);outline:none" onkeydown="if(event.key===\'Enter\')agregarFuga(\'' + cat.key + '\',\'' + cat.color + '\')">';
+    html += '<button onclick="agregarFuga(\'' + cat.key + '\',\'' + cat.color + '\')" style="padding:.45rem .8rem;border:none;border-radius:8px;background:' + cat.color + ';color:#fff;font-size:12px;cursor:pointer">+</button>';
+    html += '</div>';
+
+    // Fugas propias agregadas
+    var propias = (c5.fugas[cat.key] && c5.fugas[cat.key].propias) || [];
+    if (propias.length) {
+      html += '<div style="margin-top:.5rem;display:flex;flex-wrap:wrap;gap:.3rem">';
+      propias.forEach(function(p, pi) {
+        html += '<span style="padding:.3rem .6rem;border-radius:20px;font-size:11px;border:1.5px solid ' + cat.color + ';background:' + cat.color + ';color:#fff;display:flex;align-items:center;gap:.3rem">' + p;
+        html += '<span onclick="eliminarFugaPropia(\'' + cat.key + '\',' + pi + ')" style="cursor:pointer;opacity:.7;font-size:10px">✕</span></span>';
+      });
+      html += '</div>';
+    }
+
+    html += '</div>';
+  });
+  cnt.innerHTML = html;
+}
+
+function toggleFuga(catKey, el, texto) {
+  if (!c5.fugas[catKey]) c5.fugas[catKey] = { lista: [], propias: [] };
+  var lista = c5.fugas[catKey].lista;
+  var idx = lista.indexOf(texto);
+  if (idx >= 0) {
+    lista.splice(idx, 1);
+    var cat = C5_CATEGORIAS.find(function(c) { return c.key === catKey; });
+    el.style.background = 'transparent';
+    el.style.color = cat ? cat.color : '#333';
+  } else {
+    lista.push(texto);
+    var cat2 = C5_CATEGORIAS.find(function(c) { return c.key === catKey; });
+    if (cat2) { el.style.background = cat2.color; el.style.color = '#fff'; }
+  }
+  guardarC5();
+}
+
+function agregarFuga(catKey, color) {
+  var inp = document.getElementById('c5-input-' + catKey);
+  var val = inp.value.trim();
+  if (!val) return;
+  if (!c5.fugas[catKey]) c5.fugas[catKey] = { lista: [], propias: [] };
+  if (!c5.fugas[catKey].propias) c5.fugas[catKey].propias = [];
+  c5.fugas[catKey].propias.push(val);
+  inp.value = '';
+  guardarC5();
+  renderC5Fugas();
+}
+
+function eliminarFugaPropia(catKey, idx) {
+  if (c5.fugas[catKey] && c5.fugas[catKey].propias) {
+    c5.fugas[catKey].propias.splice(idx, 1);
+    guardarC5();
+    renderC5Fugas();
+  }
+}
+
+function renderC5Sellos() {
+  var cnt = document.getElementById('c5-sellos-cnt');
+  if (!cnt) return;
+  // Pre-fill compromiso if saved
+  var inp = document.getElementById('c5-compromiso-txt');
+  if (inp && c5.compromiso) inp.value = c5.compromiso;
+  var html = '<div class="card" style="margin-bottom:1rem"><div class="card-tit">¿Cuáles quieres intentar esta semana?</div><div class="card-txt">No tienes que hacer todo. Elige 1 o 2 estrategias que se sientan posibles ahora.</div></div>';
+
+  C5_SELLOS.forEach(function(s) {
+    var sel = c5.sellos[s.key];
+    html += '<div onclick="toggleSello(\'' + s.key + '\',this)" style="cursor:pointer;display:flex;align-items:flex-start;gap:.8rem;padding:.9rem 1rem;border-radius:12px;border:1.5px solid ' + (sel ? 'var(--do)' : 'var(--ln)') + ';background:' + (sel ? 'rgba(var(--do-rgb,180,115,73),.08)' : 'var(--ll)') + ';margin-bottom:.6rem;transition:all .2s">';
+    html += '<span style="font-size:1.3rem;margin-top:1px">' + s.icono + '</span>';
+    html += '<div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--tx);margin-bottom:2px">' + s.label + '</div>';
+    html += '<div style="font-size:11px;color:var(--su);line-height:1.5">' + s.desc + '</div></div>';
+    html += '<span style="width:20px;height:20px;border-radius:50%;border:2px solid ' + (sel ? 'var(--do)' : 'var(--ln)') + ';background:' + (sel ? 'var(--do)' : 'transparent') + ';flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px">' + (sel ? '✓' : '') + '</span>';
+    html += '</div>';
+  });
+  cnt.innerHTML = html;
+}
+
+function toggleSello(key, el) {
+  c5.sellos[key] = !c5.sellos[key];
+  guardarC5();
+  renderC5Sellos();
+}
+
+function guardarCompromiso() {
+  var inp = document.getElementById('c5-compromiso-txt');
+  if (inp) c5.compromiso = inp.value;
+  guardarC5();
+  show('s-s5-resumen');
+}
+
+function renderC5Resumen() {
+  var cnt = document.getElementById('c5-resumen-cnt');
+  if (!cnt) return;
+
+  var totalFugas = 0;
+  C5_CATEGORIAS.forEach(function(cat) {
+    var data = c5.fugas[cat.key];
+    if (data) {
+      totalFugas += (data.lista || []).length + (data.propias || []).length;
+    }
+  });
+
+  var sellosElegidos = C5_SELLOS.filter(function(s) { return c5.sellos[s.key]; });
+
+  var html = '<div class="sesion-hero"><span class="sesion-icon">⚡</span>';
+  html += '<div class="sesion-titulo">Tu mapa de energía</div>';
+  html += '<div class="sesion-sub">Identificaste ' + totalFugas + ' fugas y elegiste ' + sellosElegidos.length + ' estrategias para sellarlas.</div></div>';
+
+  // Resumen fugas por categoría
+  html += '<div class="card" style="margin-bottom:1rem"><div class="card-tit">Tus fugas identificadas</div>';
+  C5_CATEGORIAS.forEach(function(cat) {
+    var data = c5.fugas[cat.key];
+    var todas = [];
+    if (data) { todas = (data.lista || []).concat(data.propias || []); }
+    if (!todas.length) return;
+    html += '<div style="margin-bottom:.7rem"><div style="font-size:12px;font-weight:600;color:' + cat.color + ';margin-bottom:.3rem">' + cat.icono + ' ' + cat.label + '</div>';
+    todas.forEach(function(f) {
+      html += '<div style="font-size:12px;color:var(--tx);padding:.2rem 0;border-bottom:1px solid var(--ln)">' + f + '</div>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // Sellos elegidos
+  if (sellosElegidos.length) {
+    html += '<div class="card" style="border:1.5px solid var(--do);margin-bottom:1rem"><div class="card-tit">Tus estrategias esta semana</div>';
+    sellosElegidos.forEach(function(s) {
+      html += '<div style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--ln)">';
+      html += '<span>' + s.icono + '</span><span style="font-size:12px;color:var(--tx)">' + s.label + '</span></div>';
+    });
+    html += '</div>';
+  }
+
+  // Compromiso
+  if (c5.compromiso) {
+    html += '<div class="principio"><div class="principio-label">Tu compromiso contigo</div>';
+    html += '<div class="principio-txt">' + c5.compromiso + '</div></div>';
+  }
+
+  // Cita inspiradora
+  html += '<div style="background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(236,72,153,.1));border-radius:12px;padding:1.2rem;margin:1rem 0;text-align:center">';
+  html += '<div style="font-size:13px;font-style:italic;color:var(--tx);line-height:1.7">"No sacamos nada con recargar el estanque si estamos llenas de fugas."</div>';
+  html += '<div style="font-size:11px;color:var(--su);margin-top:.5rem">— Mujer Fénix 40+</div></div>';
+
+  html += '<div style="background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(236,72,153,.08));border:1.5px solid rgba(245,158,11,.3);border-radius:12px;padding:1rem;margin:1rem 0"><div style="font-size:13px;font-weight:700;color:var(--do);margin-bottom:.4rem">📝 Tu tarea de esta semana</div>';
+  html += '<div style="font-size:12px;color:var(--tx);line-height:1.7">Tienes una cita contigo. Ve al café, al cine o donde quieras — sola. Sin culpa. Solo para estar contigo.</div></div>';
+
+  html += '<button class="btn btn-s" onclick="show(\'s-inicio\')" style="margin-top:.5rem">← Volver al inicio</button>';
+  cnt.innerHTML = html;
+}
+
+function guardarC5() {
+  if (!D.s5) D.s5 = {};
+  D.s5.fugas = c5.fugas;
+  D.s5.sellos = c5.sellos;
+  D.s5.compromiso = c5.compromiso;
+  guardarSB();
+}
+
+// Verificar si c5 tiene fugas suficientes para ir a sellos
+function c5TieneFugas() {
+  var total = 0;
+  C5_CATEGORIAS.forEach(function(cat) {
+    var data = c5.fugas[cat.key];
+    if (data) total += (data.lista || []).length + (data.propias || []).length;
+  });
+  return total > 0;
+}
 </script>
 
 
@@ -1815,6 +2083,105 @@ function show(id) {
     <div><div class="hdr-logo">Mis 6 metas</div><div class="hdr-sub">Cuaderno 4</div></div>
   </div>
   <div class="cnt" id="c4-resumen-cnt"></div>
+</div>
+
+<!-- ══ CUADERNO 5: CONTEXTO ══ -->
+<div class="screen" id="s-s5-contexto">
+  <div class="hdr">
+    <button class="bk" onclick="show('s-inicio')">←</button>
+    <div><div class="hdr-logo">Cuaderno 5</div><div class="hdr-sub">Fugas de energía</div></div>
+  </div>
+  <div class="cnt">
+    <div class="sesion-hero">
+      <span class="sesion-icon">⚡</span>
+      <div class="sesion-label">Cuaderno 5</div>
+      <div class="sesion-titulo">Fugas de energía</div>
+      <div class="sesion-sub">Identifica qué te drena — y empieza a sellar las fugas.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-tit">¿Por qué nos quedamos sin energía?</div>
+      <div class="card-txt">No es que seamos flojas ni que no tengamos suficiente voluntad. El problema es que gastamos energía en cosas que no nos damos cuenta — constantemente — y llegamos a lo importante ya vacías.<br><br>
+      Lo que ocupa espacio en tu cabeza es lo que más energía drena. Y muchas veces ni siquiera lo vemos.</div>
+    </div>
+
+    <div class="principio">
+      <div class="principio-label">La idea central de este cuaderno</div>
+      <div class="principio-txt">"No sacamos nada con recargar el estanque si estamos llenas de fugas."</div>
+      <div class="principio-sub">Antes de buscar más energía, necesitamos ver dónde se nos está yendo la que ya tenemos.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-tit">¿Qué vamos a hacer?</div>
+      <div class="card-txt">
+        <strong>1. Identificar tus fugas</strong> — las situaciones, hábitos y pensamientos que te drenan en cuatro áreas: mental, doméstica, relacional y emocional.<br><br>
+        <strong>2. Elegir estrategias para sellarlas</strong> — herramientas concretas y sencillas que ya usan otras mujeres en el programa.<br><br>
+        <strong>3. Tu compromiso de la semana</strong> — elegir una acción pequeña que puedas hacer ahora.
+      </div>
+    </div>
+
+    <div class="card" style="background:linear-gradient(135deg,rgba(139,92,246,.08),rgba(236,72,153,.08));border:1px solid rgba(139,92,246,.2)">
+      <div class="card-tit" style="color:#8B5CF6">Recuerda</div>
+      <div class="card-txt">No tienes que cambiar todo de golpe. Hoy solo vamos a ver. A nombrar. Porque lo que se nombra se puede transformar.</div>
+    </div>
+
+    <button class="btn btn-p" onclick="iniciarC5()">Empezar →</button>
+  </div>
+  <div class="ftr">Academia Mujer Fénix 40+</div>
+</div>
+
+<!-- ══ CUADERNO 5: FUGAS ══ -->
+<div class="screen" id="s-s5-fugas">
+  <div class="hdr">
+    <button class="bk" onclick="show('s-s5-contexto')">←</button>
+    <div><div class="hdr-logo">Mis fugas</div><div class="hdr-sub">Cuaderno 5</div></div>
+  </div>
+  <div class="cnt">
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-tit">¿Dónde se te va la energía?</div>
+      <div class="card-txt">Toca las que te resuenan. Puedes elegir todas las que quieras — y agregar las tuyas si no están en la lista.</div>
+    </div>
+    <div id="c5-fugas-cnt"></div>
+    <button class="btn btn-p" onclick="show('s-s5-sellos')" style="margin-top:1rem">Ver estrategias para sellarlas →</button>
+    <button class="btn btn-s" onclick="show('s-inicio')" style="margin-top:.5rem">← Volver al inicio</button>
+  </div>
+  <div class="ftr">Academia Mujer Fénix 40+</div>
+</div>
+
+<!-- ══ CUADERNO 5: SELLOS ══ -->
+<div class="screen" id="s-s5-sellos">
+  <div class="hdr">
+    <button class="bk" onclick="show('s-s5-fugas')">←</button>
+    <div><div class="hdr-logo">Estrategias</div><div class="hdr-sub">Cuaderno 5</div></div>
+  </div>
+  <div class="cnt">
+    <div class="sesion-hero" style="padding:1.2rem 0">
+      <span class="sesion-icon" style="font-size:2rem">🛠️</span>
+      <div class="sesion-titulo" style="font-size:1.2rem">Cómo sellar tus fugas</div>
+      <div class="sesion-sub">Estrategias que otras mujeres del programa ya están usando.</div>
+    </div>
+    <div id="c5-sellos-cnt"></div>
+    <div style="margin-top:1.2rem">
+      <div class="card">
+        <div class="card-tit">Tu compromiso de la semana</div>
+        <div class="card-txt" style="margin-bottom:.8rem">¿Cuál es la UNA cosa que vas a intentar esta semana? Escríbela con tus palabras.</div>
+        <textarea id="c5-compromiso-txt" rows="3" style="width:100%;padding:10px;border:1.5px solid var(--ln);border-radius:9px;font-family:Playfair Display,serif;font-size:13px;color:var(--tx);background:var(--ll);outline:none;resize:none;line-height:1.8" placeholder="Esta semana voy a..."></textarea>
+      </div>
+      <button class="btn btn-p" onclick="guardarCompromiso()">Guardar y ver mi resumen →</button>
+      <button class="btn btn-s" onclick="show('s-inicio')" style="margin-top:.5rem">← Volver al inicio</button>
+    </div>
+  </div>
+  <div class="ftr">Academia Mujer Fénix 40+</div>
+</div>
+
+<!-- ══ CUADERNO 5: RESUMEN ══ -->
+<div class="screen" id="s-s5-resumen">
+  <div class="hdr">
+    <button class="bk" onclick="show('s-s5-sellos')">←</button>
+    <div><div class="hdr-logo">Mi mapa de energía</div><div class="hdr-sub">Cuaderno 5</div></div>
+  </div>
+  <div class="cnt" id="c5-resumen-cnt"></div>
+  <div class="ftr">Academia Mujer Fénix 40+</div>
 </div>
 
 </body>
