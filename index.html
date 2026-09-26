@@ -1213,9 +1213,18 @@ function guardarHistorialC4() {
 
 async function llamarIA(sys, usr, historial) {
   try {
-    var messages = historial.length > 0
-      ? historial
-      : [{ role: 'user', content: usr }];
+    var messages;
+    if (historial && historial.length > 0) {
+      // Si el último item ya es el mensaje del usuario, usar historial directo
+      var last = historial[historial.length - 1];
+      if (last && last.role === 'user') {
+        messages = historial;
+      } else {
+        messages = historial.concat([{ role: 'user', content: usr }]);
+      }
+    } else {
+      messages = [{ role: 'user', content: usr }];
+    }
 
     var res = await fetch('https://mujerfenix.conyenrione.workers.dev/', {
       method: 'POST',
@@ -1572,7 +1581,9 @@ var c5 = {
 
 function iniciarC5() {
   if (!D.s5) D.s5 = {};
-  c5.fugas = D.s5.fugas || [];
+  // Migración: si fugas era un objeto (formato antiguo), resetear a array
+  var f = D.s5.fugas;
+  c5.fugas = Array.isArray(f) ? f : [];
   c5.fugaIdx = 0;
   c5.historial = [];
   c5.planActivo = null;
@@ -1628,7 +1639,10 @@ function mostrarNuevaFuga() {
 function agregarNuevaFuga() {
   var inp = document.getElementById('c5-nueva-input');
   var val = inp ? inp.value.trim() : '';
-  if (!val) return;
+  if (!val) {
+    if (inp) { inp.style.border = '1.5px solid #EC4899'; setTimeout(function() { inp.style.border = '1.5px solid var(--ln)'; }, 1500); }
+    return;
+  }
   c5.fugas.push({ descripcion: val, historial: [], plan: null });
   guardarC5();
   if (inp) inp.value = '';
@@ -1643,28 +1657,30 @@ function abrirFuga(idx) {
   c5.planActivo = fuga.plan || null;
   show('s-s5-chat');
 
-  var tit = document.getElementById('c5-chat-titulo');
-  var desc = document.getElementById('c5-chat-desc');
-  if (tit) tit.textContent = 'Fuga ' + (idx + 1);
-  if (desc) desc.textContent = fuga.descripcion;
+  setTimeout(function() {
+    var tit = document.getElementById('c5-chat-titulo');
+    var desc = document.getElementById('c5-chat-desc');
+    if (tit) tit.textContent = 'Fuga ' + (idx + 1);
+    if (desc) desc.textContent = fuga.descripcion;
 
-  var mensajes = document.getElementById('c5-mensajes');
-  if (mensajes) mensajes.innerHTML = '';
+    var mensajes = document.getElementById('c5-mensajes');
+    if (mensajes) mensajes.innerHTML = '';
 
-  var planArea = document.getElementById('c5-plan-area');
-  if (planArea) planArea.innerHTML = '';
+    var planArea = document.getElementById('c5-plan-area');
+    if (planArea) planArea.innerHTML = '';
 
-  var inputArea = document.getElementById('c5-input-area');
-  if (inputArea) inputArea.style.display = 'none';
+    var inputArea = document.getElementById('c5-input-area');
+    if (inputArea) inputArea.style.display = 'none';
 
-  if (c5.planActivo) {
-    c5mostrarPlan(c5.planActivo);
-  } else if (c5.historial.length) {
-    c5.historial.forEach(function(m) { c5mostrarMensaje(m.content, m.role === 'user' ? 'user' : 'ai'); });
-    c5habilitarInput();
-  } else {
-    c5primeraPregunta(fuga);
-  }
+    if (c5.planActivo) {
+      c5mostrarPlan(c5.planActivo);
+    } else if (c5.historial.length) {
+      c5.historial.forEach(function(m) { c5mostrarMensaje(m.content, m.role === 'user' ? 'user' : 'ai'); });
+      c5habilitarInput();
+    } else {
+      c5primeraPregunta(fuga);
+    }
+  }, 50);
 }
 
 function buildSysC5(fugaDesc) {
@@ -1690,6 +1706,11 @@ async function c5primeraPregunta(fuga) {
   try {
     var resp = await llamarIA(sys, primerMsg, []);
     c5quitarTyping();
+    if (!resp) {
+      c5mostrarMensaje('Hubo un problema al conectar. Toca aquí para intentar de nuevo.', 'ai');
+      c5habilitarInput();
+      return;
+    }
     c5.historial.push({ role: 'user', content: primerMsg });
     c5.historial.push({ role: 'assistant', content: resp });
     guardarHistorialC5();
@@ -1727,7 +1748,7 @@ async function enviarRespuestaC5() {
   c5mostrarTyping();
   var sys = buildSysC5(c5.fugas[c5.fugaIdx].descripcion);
   try {
-    var resp = await llamarIA(sys, val, c5.historial.slice(0, -1));
+    var resp = await llamarIA(sys, val, c5.historial);
     c5quitarTyping();
     c5.historial.push({ role: 'assistant', content: resp });
     guardarHistorialC5();
