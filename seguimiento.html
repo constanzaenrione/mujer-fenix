@@ -242,11 +242,13 @@ async function cargarTodoSB() {
     var res = await sb.from('fichas').select('data').eq('email', ud.data.user.email).single();
     if (res.data && res.data.data) {
       var d = res.data.data;
-      if (d.dias) localStorage.setItem('sf_dias_v1', JSON.stringify(d.dias));
-      if (d.progreso) localStorage.setItem('sf_progreso_v1', JSON.stringify(d.progreso));
-      if (d.comidasGuardadas) localStorage.setItem('sf_comidas_guardadas_v1', JSON.stringify(d.comidasGuardadas));
-      if (d.perfil) localStorage.setItem('sf_perfil_v1', JSON.stringify(d.perfil));
-      if (d.habitosPersonales) localStorage.setItem('sf_habitos_personales_v1', JSON.stringify(d.habitosPersonales));
+      var faltoEspacio = false;
+      if (d.dias) { if (!sfCacheSet('sf_dias_v1', d.dias)) faltoEspacio = true; }
+      if (d.progreso) { if (!sfCacheSet('sf_progreso_v1', d.progreso)) faltoEspacio = true; }
+      if (d.comidasGuardadas) { if (!sfCacheSet('sf_comidas_guardadas_v1', d.comidasGuardadas)) faltoEspacio = true; }
+      if (d.perfil) sfCacheSet('sf_perfil_v1', d.perfil);
+      if (d.habitosPersonales) sfCacheSet('sf_habitos_personales_v1', d.habitosPersonales);
+      if (faltoEspacio) dfToast('⚠️ Poco espacio en el teléfono: tus datos están a salvo en la nube, pero bórrate fotos antiguas en Progreso para que todo cargue bien aquí.');
     }
   } catch(e) { console.warn('Error cargando desde Supabase:', e); }
 }
@@ -259,16 +261,34 @@ function dfToast(msg) {
   setTimeout(function(){ t.style.opacity='0'; setTimeout(function(){ t.remove(); }, 400); }, 1800);
 }
 
+// ── CACHÉ EN MEMORIA (fuente de verdad durante la sesión) ──
+// localStorage puede llenarse (fotos en base64 ocupan mucho espacio).
+// Si eso pasa, localStorage.setItem falla en silencio: sin este caché,
+// la app seguía mostrando datos viejos aunque el guardado hubiera fallado.
+var SF_CACHE = {};
+function sfCacheGet(key, fallback) {
+  if (!(key in SF_CACHE)) {
+    try { SF_CACHE[key] = JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); }
+    catch(e) { SF_CACHE[key] = fallback; }
+  }
+  return SF_CACHE[key];
+}
+function sfCacheSet(key, value) {
+  SF_CACHE[key] = value;
+  try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+  catch(e) { return false; }
+}
+
 // ═══════════════════════════════════════════
 // PERFIL POR PERSONA (sin valores por defecto de nadie)
 // ═══════════════════════════════════════════
 var FACTORES_ACTIVIDAD = { sedentaria: 1.2, ligera: 1.375, moderada: 1.55 };
 
 function pfGetPerfil() {
-  try { return JSON.parse(localStorage.getItem('sf_perfil_v1') || 'null'); } catch(e) { return null; }
+  return sfCacheGet('sf_perfil_v1', null);
 }
 function pfSavePerfil(perfil) {
-  try { localStorage.setItem('sf_perfil_v1', JSON.stringify(perfil)); } catch(e) {}
+  sfCacheSet('sf_perfil_v1', perfil);
   sfGuardarCampos({ perfil: perfil });
 }
 function pfCalcularCalorias() {
@@ -367,16 +387,16 @@ function sfTab(tab) {
 }
 
 function dfGetData() {
-  try { var all = JSON.parse(localStorage.getItem('sf_dias_v1') || '{}'); return all[SF.fecha] || {}; } catch(e) { return {}; }
+  var all = sfCacheGet('sf_dias_v1', {});
+  return all[SF.fecha] || {};
 }
 function dfSaveData(patch) {
-  try {
-    var all = JSON.parse(localStorage.getItem('sf_dias_v1') || '{}');
-    if (!all[SF.fecha]) all[SF.fecha] = {};
-    Object.assign(all[SF.fecha], patch);
-    localStorage.setItem('sf_dias_v1', JSON.stringify(all));
-    sfGuardarCampos({ dias: all });
-  } catch(e) {}
+  var all = sfCacheGet('sf_dias_v1', {});
+  if (!all[SF.fecha]) all[SF.fecha] = {};
+  Object.assign(all[SF.fecha], patch);
+  var ok = sfCacheSet('sf_dias_v1', all);
+  sfGuardarCampos({ dias: all });
+  if (!ok) dfToast('⚠️ Sin espacio en el teléfono. Se guardó en la nube, pero borra fotos antiguas en Progreso para liberar espacio aquí.');
 }
 
 function sfRenderTab() {
@@ -729,10 +749,11 @@ function dfEliminarComida(idx) {
   data.comidas.splice(idx,1); dfSaveData({comidas:data.comidas}); sfRenderTab();
 }
 // ── COMIDAS GUARDADAS (biblioteca) ──
-function gcGetAll() { try { return JSON.parse(localStorage.getItem('sf_comidas_guardadas_v1')||'[]'); } catch(e){ return []; } }
+function gcGetAll() { return sfCacheGet('sf_comidas_guardadas_v1', []); }
 function gcSaveAll(arr) {
-  try { localStorage.setItem('sf_comidas_guardadas_v1', JSON.stringify(arr)); } catch(e) {}
+  var ok = sfCacheSet('sf_comidas_guardadas_v1', arr);
   sfGuardarCampos({ comidasGuardadas: arr });
+  if (!ok) dfToast('⚠️ Sin espacio en el teléfono. Se guardó en la nube, pero borra fotos antiguas para liberar espacio aquí.');
 }
 function dfGuardarComidaFrecuente(mealId) {
   var data = dfGetData();
@@ -800,7 +821,7 @@ async function dfAnalizarDia() {
   var cal = pfCalcularCalorias();
   var gastadas = Math.round((data.movimiento && data.movimiento.calGastadas) || 0);
   var horaActual = new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
-  var todos = JSON.parse(localStorage.getItem('sf_dias_v1')||'{}');
+  var todos = sfCacheGet('sf_dias_v1', {});
   var fechas = Object.keys(todos).filter(function(f){return f!==SF.fecha;}).sort().slice(-7);
   var historialResumen = fechas.map(function(f){
     var d = todos[f];
@@ -865,7 +886,7 @@ async function dfPreguntarCoach() {
   }).join('\n');
 
   // Historial reciente para contexto de patrones
-  var todos = JSON.parse(localStorage.getItem('sf_dias_v1')||'{}');
+  var todos = sfCacheGet('sf_dias_v1', {});
   var fechas = Object.keys(todos).filter(function(f){return f!==SF.fecha;}).sort().slice(-5);
   var historialResumen = fechas.map(function(f){
     var d = todos[f];
@@ -976,9 +997,9 @@ var HABITOS_BASE = [
   { id:'verduras', icono:'🥦', nombre:'Verduras', desc:'¿Comiste verduras hoy?' },
   { id:'dormir', icono:'😴', nombre:'Buen descanso', desc:'¿Dormiste bien anoche?' },
 ];
-function hpGetPersonalizados() { try { return JSON.parse(localStorage.getItem('sf_habitos_personales_v1')||'[]'); } catch(e){ return []; } }
+function hpGetPersonalizados() { return sfCacheGet('sf_habitos_personales_v1', []); }
 function hpSavePersonalizados(arr) {
-  try { localStorage.setItem('sf_habitos_personales_v1', JSON.stringify(arr)); } catch(e) {}
+  sfCacheSet('sf_habitos_personales_v1', arr);
   sfGuardarCampos({ habitosPersonales: arr });
 }
 function dfRenderHabitos() {
@@ -1060,10 +1081,11 @@ function pgTab(tab) {
   var btn = document.getElementById('pgt-'+tab); if (btn) btn.classList.add('active');
   pgRenderTab();
 }
-function pgGetAll() { try { return JSON.parse(localStorage.getItem('sf_progreso_v1')||'[]'); } catch(e){ return []; } }
+function pgGetAll() { return sfCacheGet('sf_progreso_v1', []); }
 function pgSaveAll(arr) {
-  try { localStorage.setItem('sf_progreso_v1', JSON.stringify(arr)); } catch(e) {}
+  var ok = sfCacheSet('sf_progreso_v1', arr);
   sfGuardarCampos({ progreso: arr });
+  if (!ok) dfToast('⚠️ Sin espacio en el teléfono. Se guardó en la nube, pero borra fotos de avance antiguas para liberar espacio aquí.');
 }
 function pgRenderTab() {
   var c = document.getElementById('pg-content'); if (!c) return;
