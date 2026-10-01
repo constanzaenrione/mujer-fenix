@@ -49,6 +49,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--fo);color:var(--tx);min-h
 .df-bar-top{display:flex;justify-content:space-between;font-size:.86rem;margin-bottom:3px;font-weight:500}
 .df-bar-bg{height:4px;background:var(--lv);border-radius:2px;overflow:hidden}
 .df-bar-fill{height:100%;border-radius:2px;transition:width .4s}
+.sf-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9998;padding:1.2rem}
+.sf-modal{background:white;border-radius:14px;padding:1.2rem;width:100%;max-width:340px;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+.sf-modal h4{font-size:14px;font-weight:600;color:var(--mo);margin-bottom:.7rem}
+.sf-modal input{width:100%;padding:10px 12px;border:1.5px solid var(--lv);border-radius:9px;font-size:14px;color:var(--tx);outline:none;margin-bottom:.8rem;box-sizing:border-box;font-family:'DM Sans',sans-serif}
 .df-meal-item{background:var(--fo);border-radius:9px;padding:.6rem .8rem;margin-bottom:.5rem;display:flex;align-items:flex-start;gap:.5rem}
 .df-meal-del{background:none;border:none;color:#ccc;cursor:pointer;font-size:.9rem;flex-shrink:0;margin-top:1px}
 .df-meal-del:hover{color:#c00}
@@ -280,11 +284,12 @@ function pfCalcularMetas() {
   // Macros objetivo calculados a partir del perfil de CADA persona (no fijos)
   var cal = pfCalcularCalorias();
   var p = pfGetPerfil();
-  if (!cal || !p) return { cal: 1800, pro: 90, car: 180, fat: 60 };
+  if (!cal || !p) return { cal: 1800, pro: 90, car: 180, fat: 60, fib: 25 };
   var pro = Math.round(p.peso * 1.6);
   var fat = Math.round((cal.objetivo * 0.30) / 9);
   var car = Math.round((cal.objetivo - pro*4 - fat*9) / 4);
-  return { cal: cal.objetivo, pro: pro, car: Math.max(car,0), fat: fat };
+  var fib = Math.round((cal.objetivo / 1000) * 14);
+  return { cal: cal.objetivo, pro: pro, car: Math.max(car,0), fat: fat, fib: fib };
 }
 
 var pfEditorAbierto = false;
@@ -330,7 +335,7 @@ function pfGuardarEditor() {
 // ═══════════════════════════════════════════
 // DATOS DIARIOS — fecha activa, nutrición, movimiento, hábitos
 // ═══════════════════════════════════════════
-var SF = { fecha: new Date().toISOString().split('T')[0], tabActiva: 'nutricion', fotoComidaTemp: null, editandoComida: null };
+var SF = { fecha: new Date().toISOString().split('T')[0], tabActiva: 'nutricion', fotoComidaTemp: null, editandoComida: null, guardandoFavoritaId: null, nombreFavoritaSugerido: '' };
 
 function sfActualizarFecha() {
   var d = new Date(SF.fecha + 'T00:00:00');
@@ -382,9 +387,10 @@ function sfRenderTab() {
   else if (SF.tabActiva === 'movimiento') html = dfRenderMovimiento();
   else if (SF.tabActiva === 'habitos') html = dfRenderHabitos();
   else if (SF.tabActiva === 'progreso') html = pgRenderShell();
-  c.innerHTML = html;
+  c.innerHTML = html + sfRenderModalFavorita();
   c.scrollTop = 0;
   if (SF.tabActiva === 'progreso') pgRenderTab();
+  if (SF.guardandoFavoritaId) { var inp = document.getElementById('sf-modal-nombre-fav'); if (inp) { inp.focus(); inp.select(); } }
 }
 
 // ── NUTRICIÓN ──
@@ -397,8 +403,8 @@ function dfRenderNutricion() {
   var data = dfGetData();
   var comidas = data.comidas || [];
   var totals = comidas.filter(function(m){return !m.loading && !m.pendiente;}).reduce(function(acc,m){
-    return {kcal:acc.kcal+Math.round(m.kcal||0),pro:acc.pro+Math.round(m.pro||0),car:acc.car+Math.round(m.car||0),fat:acc.fat+Math.round(m.fat||0)};
-  },{kcal:0,pro:0,car:0,fat:0});
+    return {kcal:acc.kcal+Math.round(m.kcal||0),pro:acc.pro+Math.round(m.pro||0),car:acc.car+Math.round(m.car||0),fat:acc.fat+Math.round(m.fat||0),fib:acc.fib+Math.round(m.fib||0)};
+  },{kcal:0,pro:0,car:0,fat:0,fib:0});
   var T = pfCalcularMetas();
   var pct = function(v,m){return Math.min((v/m)*100,100).toFixed(0)+'%';};
   var cal = pfCalcularCalorias();
@@ -412,9 +418,10 @@ function dfRenderNutricion() {
   html += '<div class="df-macro-box"><div class="df-macro-val" style="color:#C0392B">' + totals.pro + 'g</div><div class="df-macro-lbl">Proteína</div><div class="df-macro-meta">meta ' + T.pro + 'g</div></div>';
   html += '<div class="df-macro-box"><div class="df-macro-val" style="color:#2E7D5B">' + totals.car + 'g</div><div class="df-macro-lbl">Carbos</div><div class="df-macro-meta">meta ' + T.car + 'g</div></div>';
   html += '<div class="df-macro-box"><div class="df-macro-val" style="color:#2E7DA8">' + totals.fat + 'g</div><div class="df-macro-lbl">Grasa</div><div class="df-macro-meta">meta ' + T.fat + 'g</div></div>';
+  html += '<div class="df-macro-box"><div class="df-macro-val" style="color:#6B4FA0">' + totals.fib + 'g</div><div class="df-macro-lbl">Fibra</div><div class="df-macro-meta">meta ' + T.fib + 'g</div></div>';
   html += '</div>';
 
-  [['Calorías','var(--do)',totals.kcal,T.cal,'kcal'],['Proteína','#C0392B',totals.pro,T.pro,'g'],['Carbos','#2E7D5B',totals.car,T.car,'g'],['Grasa','#2E7DA8',totals.fat,T.fat,'g']].forEach(function(b){
+  [['Calorías','var(--do)',totals.kcal,T.cal,'kcal'],['Proteína','#C0392B',totals.pro,T.pro,'g'],['Carbos','#2E7D5B',totals.car,T.car,'g'],['Grasa','#2E7DA8',totals.fat,T.fat,'g'],['Fibra','#6B4FA0',totals.fib,T.fib,'g']].forEach(function(b){
     html += '<div class="df-bar-row"><div class="df-bar-top"><span style="color:var(--su)">' + b[0] + '</span><span style="color:#bbb">' + b[2] + b[4] + ' / ' + b[3] + b[4] + '</span></div>';
     html += '<div class="df-bar-bg"><div class="df-bar-fill" style="width:' + pct(b[2],b[3]) + ';background:' + b[1] + '"></div></div></div>';
   });
@@ -524,6 +531,7 @@ function sfRenderComidas(html, comidas) {
         html += '<span style="font-size:.8rem;font-weight:600;background:rgba(192,57,43,.1);color:#C0392B;padding:2px 8px;border-radius:5px">' + m.pro + 'g P</span>';
         html += '<span style="font-size:.8rem;font-weight:600;background:rgba(46,125,91,.1);color:#2E7D5B;padding:2px 8px;border-radius:5px">' + m.car + 'g C</span>';
         html += '<span style="font-size:.8rem;font-weight:600;background:rgba(46,125,168,.1);color:#2E7DA8;padding:2px 8px;border-radius:5px">' + m.fat + 'g G</span>';
+        if (m.fib) html += '<span style="font-size:.8rem;font-weight:600;background:rgba(107,79,160,.1);color:#6B4FA0;padding:2px 8px;border-radius:5px">' + m.fib + 'g F</span>';
         if (m.nota) html += '<span style="font-size:.6rem;color:#bbb">' + m.nota + '</span>';
         html += '</div>';
       }
@@ -546,6 +554,12 @@ function sfRenderComidas(html, comidas) {
   if (guardadas.length === 0) {
     html += '<div style="font-size:11px;color:#bbb;text-align:center;padding:.4rem 0">Guarda una comida con ⭐ para agregarla rápido la próxima vez.</div>';
   } else {
+    html += '<div style="display:flex;gap:6px;margin-bottom:.7rem">';
+    html += '<select id="df-favoritas-select" style="flex:1;padding:9px 10px;border:1.5px solid var(--lv);border-radius:9px;font-size:13px;color:var(--tx);background:white">';
+    guardadas.forEach(function(g){ html += '<option value="' + g.id + '">' + g.nombre + ' (' + g.kcal + ' kcal)</option>'; });
+    html += '</select>';
+    html += '<button class="btn bp" style="margin:0;padding:9px 14px;width:auto;flex-shrink:0" onclick="gcAgregarSeleccionada()">+ Hoy</button>';
+    html += '</div>';
     guardadas.forEach(function(g) {
       html += '<div class="df-meal-item">';
       if (g.foto) html += '<img src="' + g.foto + '" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0">';
@@ -553,6 +567,7 @@ function sfRenderComidas(html, comidas) {
       html += '<div style="display:flex;gap:5px;margin-top:2px;flex-wrap:wrap">';
       html += '<span style="font-size:.58rem;background:#FFF3E0;color:#9a5a00;padding:1px 5px;border-radius:4px">' + g.kcal + ' kcal</span>';
       html += '<span style="font-size:.58rem;background:rgba(192,57,43,.1);color:#C0392B;padding:1px 5px;border-radius:4px">' + g.pro + 'g P</span>';
+      if (g.fib) html += '<span style="font-size:.58rem;background:rgba(107,79,160,.1);color:#6B4FA0;padding:1px 5px;border-radius:4px">' + g.fib + 'g F</span>';
       html += '</div></div>';
       html += '<button class="btn bp" style="margin:0;padding:6px 10px;font-size:11px;flex-shrink:0" onclick="gcAgregarAHoy(' + g.id + ')">+ Hoy</button>';
       html += '<button class="df-meal-del" onclick="gcEliminar(' + g.id + ')" title="Eliminar">✕</button></div>';
@@ -570,7 +585,7 @@ function sfRenderComidas(html, comidas) {
   else html += '<span style="font-size:1.4rem">📷</span>';
   html += '</div>';
   html += '<div style="flex:1"><textarea id="df-comida-input" rows="2" placeholder="Ej: ½ marraqueta con 2 huevos... (o solo sube una foto)" style="width:100%;padding:10px 12px;border:1.5px solid var(--lv);border-radius:9px;font-size:13px;color:var(--tx);background:white;outline:none;resize:none;height:64px;box-sizing:border-box"></textarea></div></div>';
-  html += '<input type="file" id="df-foto-input" accept="image/*" capture="environment" style="display:none" onchange="dfCargarFotoComida(event)">';
+  html += '<input type="file" id="df-foto-input" accept="image/*" style="display:none" onchange="dfCargarFotoComida(event)">';
   if (SF.fotoComidaTemp) html += '<div style="font-size:11px;color:var(--su);margin-bottom:.5rem">📸 Foto lista <span onclick="dfQuitarFotoComida()" style="color:#c00;cursor:pointer;text-decoration:underline;margin-left:6px">quitar foto</span></div>';
   html += '<button class="btn bp" onclick="dfAgregarComida()" style="margin-top:0">Agregar y calcular con IA</button></div>';
   return html;
@@ -599,11 +614,11 @@ async function dfLlamarIANutricion(descripcion, tiempo, fotoBase64) {
     (fotoBase64 ? 'Analiza la foto del plato adjunta. ' + (descripcion ? 'Descripción del usuario: "' + descripcion + '". ' : '') : 'Comida: "' + descripcion + '"\n') +
     'Tipo: ' + tiempo + '\n\n' +
     'Si tienes TODA la información necesaria, responde SOLO con este JSON sin markdown:\n' +
-    '{"tipo":"macros","kcal":número,"pro":número,"car":número,"fat":número,"nota":"observación breve máximo 6 palabras en español"}\n\n' +
+    '{"tipo":"macros","kcal":número,"pro":número,"car":número,"fat":número,"fib":número,"nota":"observación breve máximo 6 palabras en español"}\n\n' +
     'Si falta un dato IMPORTANTE, responde SOLO con:\n' +
     '{"tipo":"pregunta","pregunta":"tu pregunta breve, máximo 15 palabras"}\n\n' +
     'Prioriza calcular directamente con porciones estándar razonables. Solo pregunta si es realmente ambiguo.\n\n' +
-    'IMPORTANTE: kcal, pro, car y fat deben ser siempre números ENTEROS, sin decimales.';
+    'IMPORTANTE: kcal, pro, car, fat y fib (gramos de fibra dietética) deben ser siempre números ENTEROS, sin decimales.';
   var content;
   if (fotoBase64) {
     var mediaType = fotoBase64.substring(5, fotoBase64.indexOf(';'));
@@ -611,13 +626,16 @@ async function dfLlamarIANutricion(descripcion, tiempo, fotoBase64) {
     content = [{ type:'image', source:{ type:'base64', media_type:mediaType, data:base64Data } }, { type:'text', text:promptTexto }];
   } else { content = promptTexto; }
   var res = await fetch(WORKER_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ model:'claude-haiku-4-5-20251001', max_tokens:300, messages:[{role:'user',content:content}] }) });
+  if (!res.ok) { var errTxt = await res.text().catch(function(){return '';}); throw new Error('Worker ' + res.status + ': ' + errTxt.slice(0,200)); }
   var d = await res.json();
+  if (d.error) throw new Error(typeof d.error === 'string' ? d.error : JSON.stringify(d.error));
   var txt = d.content && d.content[0] ? d.content[0].text.trim() : '{}';
   txt = txt.replace(/```json|```/g,'').trim();
   var resultado = JSON.parse(txt);
   if (resultado.tipo === 'macros') {
     resultado.kcal = Math.round(resultado.kcal||0); resultado.pro = Math.round(resultado.pro||0);
     resultado.car = Math.round(resultado.car||0); resultado.fat = Math.round(resultado.fat||0);
+    resultado.fib = Math.round(resultado.fib||0);
   }
   return resultado;
 }
@@ -631,7 +649,7 @@ async function dfAgregarComida() {
   var tiempo = tiempoEl ? tiempoEl.value : 'Comida';
   var data = dfGetData();
   if (!data.comidas) data.comidas = [];
-  var meal = { id: Date.now(), tiempo: tiempo, desc: desc || '(analizado por foto)', foto: foto||null, kcal:0,pro:0,car:0,fat:0, nota:'', loading:true };
+  var meal = { id: Date.now(), tiempo: tiempo, desc: desc || '(analizado por foto)', foto: foto||null, kcal:0,pro:0,car:0,fat:0,fib:0, nota:'', loading:true };
   data.comidas.push(meal);
   dfSaveData({ comidas: data.comidas });
   if (input) input.value = ''; SF.fotoComidaTemp = null;
@@ -642,12 +660,13 @@ async function dfAgregarComida() {
     var idx = freshData.comidas.findIndex(function(m){return m.id===meal.id;});
     if (idx < 0) return;
     if (resultado.tipo === 'pregunta') { freshData.comidas[idx].loading=false; freshData.comidas[idx].pendiente=true; freshData.comidas[idx].pregunta=resultado.pregunta; }
-    else { freshData.comidas[idx] = Object.assign({}, freshData.comidas[idx], { kcal:resultado.kcal,pro:resultado.pro,car:resultado.car,fat:resultado.fat,nota:resultado.nota, loading:false, pendiente:false }); }
+    else { freshData.comidas[idx] = Object.assign({}, freshData.comidas[idx], { kcal:resultado.kcal,pro:resultado.pro,car:resultado.car,fat:resultado.fat,fib:resultado.fib,nota:resultado.nota, loading:false, pendiente:false }); }
     dfSaveData({ comidas: freshData.comidas });
   } catch(e) {
     var freshData = dfGetData();
     var idx = freshData.comidas ? freshData.comidas.findIndex(function(m){return m.id===meal.id;}) : -1;
     if (idx>=0) { freshData.comidas[idx].loading=false; freshData.comidas[idx].nota='Error al calcular'; dfSaveData({comidas:freshData.comidas}); }
+    dfToast('⚠️ No se pudo calcular: ' + (e && e.message ? e.message.slice(0,60) : 'intenta de nuevo'));
   }
   sfRenderTab();
 }
@@ -668,7 +687,7 @@ async function dfResponderPregunta(mealId) {
     var idx2 = freshData.comidas.findIndex(function(m){return m.id===mealId;});
     if (idx2 < 0) return;
     if (resultado.tipo === 'pregunta') { freshData.comidas[idx2].loading=false; freshData.comidas[idx2].pendiente=true; freshData.comidas[idx2].pregunta=resultado.pregunta; }
-    else { freshData.comidas[idx2] = Object.assign({}, freshData.comidas[idx2], { kcal:resultado.kcal,pro:resultado.pro,car:resultado.car,fat:resultado.fat,nota:resultado.nota, loading:false, pendiente:false }); }
+    else { freshData.comidas[idx2] = Object.assign({}, freshData.comidas[idx2], { kcal:resultado.kcal,pro:resultado.pro,car:resultado.car,fat:resultado.fat,fib:resultado.fib,nota:resultado.nota, loading:false, pendiente:false }); }
     dfSaveData({ comidas: freshData.comidas });
   } catch(e) {
     var freshData = dfGetData();
@@ -696,7 +715,7 @@ async function dfGuardarEdicionComida(mealId) {
     var idx2 = freshData.comidas.findIndex(function(m){return m.id===mealId;});
     if (idx2 < 0) return;
     if (resultado.tipo === 'pregunta') { freshData.comidas[idx2].loading=false; freshData.comidas[idx2].pendiente=true; freshData.comidas[idx2].pregunta=resultado.pregunta; }
-    else { freshData.comidas[idx2] = Object.assign({}, freshData.comidas[idx2], { kcal:resultado.kcal,pro:resultado.pro,car:resultado.car,fat:resultado.fat,nota:resultado.nota, loading:false, pendiente:false }); }
+    else { freshData.comidas[idx2] = Object.assign({}, freshData.comidas[idx2], { kcal:resultado.kcal,pro:resultado.pro,car:resultado.car,fat:resultado.fat,fib:resultado.fib,nota:resultado.nota, loading:false, pendiente:false }); }
     dfSaveData({ comidas: freshData.comidas });
   } catch(e) {
     var freshData = dfGetData();
@@ -720,22 +739,48 @@ function dfGuardarComidaFrecuente(mealId) {
   var meal = (data.comidas||[]).find(function(m){return m.id===mealId;});
   if (!meal) return;
   var nombreSugerido = meal.desc.length>40 ? meal.desc.substring(0,40)+'…' : meal.desc;
-  var nombre = window.prompt('¿Con qué nombre quieres guardar esta comida?', nombreSugerido);
-  if (!nombre) return;
+  SF.guardandoFavoritaId = mealId;
+  SF.nombreFavoritaSugerido = nombreSugerido;
+  sfRenderTab();
+}
+function dfCancelarGuardarFavorita() { SF.guardandoFavoritaId = null; sfRenderTab(); }
+function dfConfirmarGuardarFavorita() {
+  var input = document.getElementById('sf-modal-nombre-fav');
+  var nombre = input ? input.value.trim() : '';
+  if (!nombre) { input && input.focus(); return; }
+  var data = dfGetData();
+  var meal = (data.comidas||[]).find(function(m){return m.id===SF.guardandoFavoritaId;});
+  SF.guardandoFavoritaId = null;
+  if (!meal) { sfRenderTab(); return; }
   var guardadas = gcGetAll();
-  guardadas.push({ id:Date.now(), nombre:nombre, tiempo:meal.tiempo, desc:meal.desc, foto:meal.foto||null, kcal:meal.kcal,pro:meal.pro,car:meal.car,fat:meal.fat });
+  guardadas.push({ id:Date.now(), nombre:nombre, tiempo:meal.tiempo, desc:meal.desc, foto:meal.foto||null, kcal:meal.kcal,pro:meal.pro,car:meal.car,fat:meal.fat,fib:meal.fib||0 });
   gcSaveAll(guardadas);
   dfToast('⭐ Comida guardada');
   sfRenderTab();
+}
+function sfRenderModalFavorita() {
+  if (!SF.guardandoFavoritaId) return '';
+  var h = '<div class="sf-modal-bg" onclick="if(event.target===this)dfCancelarGuardarFavorita()"><div class="sf-modal">';
+  h += '<h4>¿Con qué nombre quieres guardarla?</h4>';
+  h += '<input type="text" id="sf-modal-nombre-fav" value="' + SF.nombreFavoritaSugerido.replace(/"/g,'&quot;') + '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();dfConfirmarGuardarFavorita();}">';
+  h += '<div style="display:flex;gap:8px"><button class="btn bs" style="margin:0" onclick="dfCancelarGuardarFavorita()">Cancelar</button>';
+  h += '<button class="btn bp" style="margin:0" onclick="dfConfirmarGuardarFavorita()">Guardar</button></div>';
+  h += '</div></div>';
+  return h;
 }
 function gcAgregarAHoy(gcId) {
   var g = gcGetAll().find(function(x){return x.id===gcId;});
   if (!g) return;
   var data = dfGetData(); if (!data.comidas) data.comidas = [];
-  data.comidas.push({ id:Date.now(), tiempo:g.tiempo, desc:g.desc, foto:g.foto||null, kcal:g.kcal,pro:g.pro,car:g.car,fat:g.fat, nota:'', loading:false, pendiente:false });
+  data.comidas.push({ id:Date.now(), tiempo:g.tiempo, desc:g.desc, foto:g.foto||null, kcal:g.kcal,pro:g.pro,car:g.car,fat:g.fat,fib:g.fib||0, nota:'', loading:false, pendiente:false });
   dfSaveData({ comidas: data.comidas });
   dfToast('✓ Agregada a hoy');
   sfRenderTab();
+}
+function gcAgregarSeleccionada() {
+  var sel = document.getElementById('df-favoritas-select');
+  if (!sel || !sel.value) return;
+  gcAgregarAHoy(parseInt(sel.value,10));
 }
 function gcEliminar(gcId) {
   if (!confirm('¿Quitar esta comida de tus guardadas?')) return;
@@ -1035,7 +1080,7 @@ function pgRenderRegistrar() {
   h += '</div>';
   h += '<div class="df-card"><h3>📸 Foto de avance</h3><div class="pg-foto-upload" onclick="document.getElementById(\'pg-foto-input\').click()">';
   h += PG.fotoTemp ? ('<img src="' + PG.fotoTemp + '">') : '<div style="font-size:2rem">📷</div><div style="font-size:12px;color:var(--su);margin-top:4px">Toca para tomar o subir foto</div>';
-  h += '</div><input type="file" id="pg-foto-input" accept="image/*" capture="environment" style="display:none" onchange="pgCargarFoto(event)">';
+  h += '</div><input type="file" id="pg-foto-input" accept="image/*" style="display:none" onchange="pgCargarFoto(event)">';
   if (PG.fotoTemp) h += '<button class="btn bs" style="margin-top:.5rem" onclick="pgQuitarFoto()">Quitar foto</button>';
   h += '</div>';
   h += '<div class="df-card"><h3>📝 Notas</h3><textarea id="pg-notas" rows="2" placeholder="Notas libres..." style="width:100%;padding:10px 12px;border:1.5px solid var(--lv);border-radius:9px;font-size:13px;color:var(--tx);background:white;outline:none;resize:none"></textarea></div>';
