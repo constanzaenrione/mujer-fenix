@@ -509,28 +509,53 @@ async function guardarSB() {
   try {
     var ud = await sb.auth.getUser();
     if (!ud.data || !ud.data.user) return;
-    var email = ud.data.user.email;
-    // Leer lo que ya hay en Supabase antes de guardar (evita sobreescribir datos de otra sesión)
-    var existing = await sb.from('fichas').select('data').eq('email', email).single();
-    var base = (existing.data && existing.data.data) ? existing.data.data : {};
-    // Merge: los datos actuales de D tienen prioridad, pero si D tiene un campo vacío y base lo tiene, conservar base
-    var merged = Object.assign({}, base);
-    ['nombre','caracts','s2','s3','s4','s5','dias','perfil','comidasGuardadas','caracts'].forEach(function(k) {
-      var dVal = D[k];
-      var bVal = base[k];
-      // Si D tiene dato real (no vacío), usar D. Si D está vacío y base tiene dato, conservar base.
-      if (dVal && (typeof dVal !== 'object' || (Array.isArray(dVal) ? dVal.length > 0 : Object.keys(dVal).length > 0))) {
-        merged[k] = dVal;
-      } else if (bVal) {
-        merged[k] = bVal;
-      } else {
-        merged[k] = dVal;
-      }
-    });
-    var result = await sb.from('fichas').upsert({ email: email, data: merged, updated_at: new Date().toISOString() }, { onConflict: 'email' });
+    var result = await sb.from('fichas').upsert({ email: ud.data.user.email, data: D, updated_at: new Date().toISOString() }, { onConflict: 'email' });
     if (result.error) console.error('Supabase error:', result.error);
   } catch(e) { console.warn('Error guardando:', e); }
 }
+
+// ── AUTOGUARDADO ──
+// 1) Captura todos los campos de texto y guarda localmente mientras se escribe (debounce 2s)
+var _agTimer = null;
+function _agFlush() {
+  // Recoge todos los textareas/inputs con id conocido y los vuelca en D
+  var campos = {
+    's2-salud': ['s2','salud'], 's2-disfrute': ['s2','disfrute'],
+    's2-finanzas': ['s2','finanzas'], 's2-talentos': ['s2','talentos'],
+    's2-relaciones': ['s2','relaciones'], 's2-tranquilidad': ['s2','tranquilidad'],
+    'f-prioritario-porque': ['s2','prioritario_porque'],
+    's3-vision-text': ['s3','vision']
+  };
+  Object.keys(campos).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var keys = campos[id];
+    if (!D[keys[0]]) D[keys[0]] = {};
+    D[keys[0]][keys[1]] = el.value;
+  });
+  // Cuaderno 5: chat input en vuelo
+  var c5inp = document.getElementById('c5-input');
+  if (c5inp && c5inp.value) {
+    if (!D._draft) D._draft = {};
+    D._draft.c5 = c5inp.value;
+  }
+  guardarLocal();
+}
+document.addEventListener('input', function() {
+  clearTimeout(_agTimer);
+  _agTimer = setTimeout(function() { _agFlush(); guardarSB(); }, 2000);
+});
+
+// 2) Guardar cuando la usuaria minimiza, cambia de pestaña o app (móvil/desktop)
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'hidden') { _agFlush(); guardarSB(); }
+});
+window.addEventListener('pagehide', function() { _agFlush(); guardarSB(); });
+window.addEventListener('blur', function() {
+  clearTimeout(_agTimer);
+  _agFlush();
+  guardarSB();
+});
 
 async function cargarSB() {
   if (!sb) return;
