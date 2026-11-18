@@ -169,6 +169,28 @@ body{font-family:'DM Sans',sans-serif;background:var(--ll);color:var(--tx);min-h
   .cnt{padding:.3rem;max-width:100%}
   .print-card{box-shadow:none;border-radius:10px}
 }
+
+/* ¿CÓMO ESTOY DE VERDAD? */
+.ev-card{margin-bottom:1.1rem}
+.ev-head{margin-bottom:.7rem}
+.ev-badge{display:inline-block;background:var(--do);color:var(--mo);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 10px;border-radius:20px}
+.ev-lab{font-size:12px;font-weight:600;color:var(--tx);margin:.7rem 0 .35rem}
+.ev-preg{font-size:12px;font-weight:600;color:#8a6a10;margin:.8rem 0 .35rem}
+.ev-preg::before{content:'👉 '}
+.ev-ta{width:100%;padding:.6rem .8rem;border:1.5px solid var(--ln);border-radius:9px;font-family:inherit;font-size:13px;color:var(--tx);background:var(--ll);outline:none;resize:vertical;line-height:1.5;display:block}
+.ev-ta:focus{border-color:var(--mo);background:#fff}
+.ev-notas{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:.2rem 0 .2rem}
+.ev-n{font-family:'Playfair Display',serif;font-size:16px;padding:10px 0;border:1.5px solid var(--ln);background:#fff;color:var(--mo);border-radius:10px;cursor:pointer}
+.ev-n.on{background:var(--mo);color:#fff;border-color:var(--mo)}
+.ev-col{border-left:4px solid var(--do);background:var(--ll);border-radius:0 12px 12px 0;padding:.9rem .9rem 1rem;margin:.9rem 0}
+.ev-col-t{font-family:'Playfair Display',serif;color:var(--mo);font-size:15px;font-weight:600;margin-bottom:.2rem}
+.ev-mini{background:var(--lv);border-radius:12px;padding:.8rem .9rem 1rem;margin:.9rem 0 0}
+.ev-mini-t{font-size:13px;font-weight:700;color:var(--mo);margin-bottom:.1rem}
+.ev-box{background:var(--lv);border-radius:12px;padding:.9rem;margin-bottom:.5rem}
+.ev-chips{display:flex;flex-wrap:wrap;gap:6px;margin:.5rem 0 .6rem}
+.ev-chip{font-size:12px;color:var(--mo);background:#fff;border:1px solid var(--ln);border-radius:20px;padding:3px 10px}
+.ev-ej{margin-top:.4rem;font-size:12px;font-style:italic;color:var(--su);line-height:1.6}
+.ev-ej div{margin:.25rem 0}
 </style>
 </head>
 <body>
@@ -442,7 +464,7 @@ var sb = null;
 function initSB() { try { sb = window.supabase.createClient(SURL, SKEY); return true; } catch(e) { return false; } }
 
 // ── ESTADO ──
-var D = { nombre: '', caracts: [], s2: {}, s3: {}, s4: {}, s5: {} };
+var D = { nombre: '', caracts: [], s2: {}, s3: {}, s4: {}, s5: {}, estoy: {} };
 var authMode = 'in';
 
 // ── AUTH ──
@@ -533,6 +555,7 @@ function _agFlush() {
     if (!D[keys[0]]) D[keys[0]] = {};
     D[keys[0]][keys[1]] = el.value;
   });
+  if (typeof _estoyFlush === 'function') _estoyFlush();
   // Cuaderno 5: chat input en vuelo
   var c5inp = document.getElementById('c5-input');
   if (c5inp && c5inp.value) {
@@ -571,9 +594,10 @@ async function cargarSB() {
       D.s4 = res.data.data.s4 || {};
       if (D.s4) { c4.metas = D.s4.metas || {}; c4.planes = D.s4.planes || {}; }
       D.s5 = res.data.data.s5 || {};
+      D.estoy = res.data.data.estoy || {};
     }
   } catch(e) {
-    try { var loc = localStorage.getItem('mf40_cuaderno'); if (loc) { var p = JSON.parse(loc); D.nombre = p.nombre||''; D.caracts = p.caracts||[]; D.s2 = p.s2||{}; D.s3 = p.s3||{}; D.s4 = p.s4||{}; if (D.s4) { c4.metas = D.s4.metas||{}; c4.planes = D.s4.planes||{}; } D.s5 = p.s5||{}; } } catch(e2) {}
+    try { var loc = localStorage.getItem('mf40_cuaderno'); if (loc) { var p = JSON.parse(loc); D.nombre = p.nombre||''; D.caracts = p.caracts||[]; D.s2 = p.s2||{}; D.s3 = p.s3||{}; D.s4 = p.s4||{}; if (D.s4) { c4.metas = D.s4.metas||{}; c4.planes = D.s4.planes||{}; } D.s5 = p.s5||{}; D.estoy = p.estoy||{}; } } catch(e2) {}
   }
 }
 
@@ -581,6 +605,7 @@ async function cargarSB() {
 function entrar() {
   var nombre = D.nombre || 'Mi Cuaderno';
   document.getElementById('h-nombre').textContent = nombre;
+  estoyInit();
   renderSesiones();
   renderLista();
   // Show portada briefly then go to inicio
@@ -594,7 +619,8 @@ var SESIONES = [
   { id: 's2', num: '2', titulo: 'Los frutos de la vida que quiero cultivar', desc: '¿Qué quiero para cada área de mi vida?', icono: '🌿', activa: true },
   { id: 's3', num: '3', titulo: 'Mi visión de vida', desc: 'Cómo se ve mi vida ya realizada — en presente', icono: '✨', activa: true },
   { id: 's4', num: '4', titulo: 'Mis metas a 90 días', desc: 'De la visión a metas concretas por área', icono: '🎯', activa: true },
-  { id: 's5', num: '5', titulo: 'Fugas de energía', desc: 'Identifica qué te drena y empieza a sellar las fugas', icono: '⚡', activa: true }
+  { id: 's5', num: '5', titulo: 'Fugas de energía', desc: 'Identifica qué te drena y empieza a sellar las fugas', icono: '⚡', activa: true },
+  { id: 's6', num: '6', titulo: '¿Cómo estoy de verdad?', desc: 'Una semana para mirarme con valentía', icono: '🪞', activa: true }
 ];
 
 function renderSesiones() {
@@ -1989,6 +2015,43 @@ function guardarAct2() {
   var el = document.querySelector('#s-s5-actividades [onclick="guardarAct2()"]');
   if (el) { el.textContent = '✓ ¡Comprometida!'; setTimeout(function() { el.textContent = 'Me comprometo a tener esta conversación ✓'; }, 2500); }
 }
+
+// ══════════════════════════════════════════════════════════════
+// ── ¿CÓMO ESTOY DE VERDAD? (ejercicio de la semana) ──
+// ══════════════════════════════════════════════════════════════
+window._estoyListo = false;
+
+function estoyInit() {
+  if (!D.estoy) D.estoy = {};
+  document.querySelectorAll('#s-s6-contexto [data-ev]').forEach(function(el) {
+    el.value = D.estoy[el.getAttribute('data-ev')] || '';
+  });
+  estoyPintarNotas();
+  window._estoyListo = true; // recién ahora se permite guardar, para no pisar lo guardado con vacío
+}
+
+function _estoyFlush() {
+  if (!window._estoyListo) return;
+  if (!D.estoy) D.estoy = {};
+  document.querySelectorAll('#s-s6-contexto [data-ev]').forEach(function(el) {
+    D.estoy[el.getAttribute('data-ev')] = el.value;
+  });
+}
+
+function estoyNota(k, n) {
+  if (!window._estoyListo) return;
+  if (!D.estoy) D.estoy = {};
+  D.estoy['nota_' + k] = n;
+  estoyPintarNotas();
+  guardarSB();
+}
+
+function estoyPintarNotas() {
+  document.querySelectorAll('#s-s6-contexto .ev-n').forEach(function(b) {
+    var sel = D.estoy && D.estoy['nota_' + b.getAttribute('data-k')] === parseInt(b.getAttribute('data-n'), 10);
+    b.classList.toggle('on', !!sel);
+  });
+}
 </script>
 
 
@@ -2451,6 +2514,172 @@ function guardarAct2() {
     </div>
 
     <button class="btn btn-s" onclick="show('s-inicio')" style="margin-top:.5rem">← Volver al inicio</button>
+  </div>
+  <div class="ftr">Academia Mujer Fénix 40+</div>
+</div>
+
+
+<!-- ══ ¿CÓMO ESTOY DE VERDAD? ══ -->
+<div class="screen" id="s-s6-contexto">
+  <div class="hdr">
+    <button class="bk" onclick="show('s-inicio')">←</button>
+    <div><div class="hdr-logo">Cuaderno 6</div><div class="hdr-sub">¿Cómo estoy de verdad?</div></div>
+  </div>
+  <div class="cnt">
+    <div class="sesion-hero">
+      <span class="sesion-icon">🪞</span>
+      <div class="sesion-label">Cuaderno 6</div>
+      <div class="sesion-titulo">¿Cómo estoy de verdad?</div>
+      <div class="sesion-sub">Una semana para mirarme con valentía. Sin arreglar nada, solo observar.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-tit">Antes de empezar 💛</div>
+      <div class="card-txt">Esta semana no vamos a arreglar ni a cambiar nada. Solo vamos a <strong>mirarnos</strong>: qué nos llena, qué nos pesa y qué nunca nos hemos atrevido a decir.<br><br>
+      No hay respuestas buenas ni malas. Es solo para ti, y compartir es opcional.<br><br>
+      Algo importante: <strong>aunque tu vida sea muy linda, igual puede tener una espinita.</strong> Tener una no significa que algo esté mal. Significa que eres humana. Aquí solo la buscamos para que deje de pesar.</div>
+    </div>
+
+    <!-- EJERCICIO 1 -->
+    <div class="card ev-card">
+      <div class="ev-head"><span class="ev-badge">Ejercicio 1</span><div class="card-tit" style="margin:.35rem 0 0;font-size:18px">Mi termómetro</div></div>
+      <div class="card-txt" style="margin-bottom:.8rem">Hoy, 1 minuto. Marca el primer número que te salga, sin pensarlo mucho. Lo que respondas ya es una pista.</div>
+      <div class="ev-lab">Mi felicidad, del 1 al 10</div>
+      <div class="ev-notas"><button type="button" class="ev-n" data-k="fel" data-n="1" onclick="estoyNota('fel',1)">1</button><button type="button" class="ev-n" data-k="fel" data-n="2" onclick="estoyNota('fel',2)">2</button><button type="button" class="ev-n" data-k="fel" data-n="3" onclick="estoyNota('fel',3)">3</button><button type="button" class="ev-n" data-k="fel" data-n="4" onclick="estoyNota('fel',4)">4</button><button type="button" class="ev-n" data-k="fel" data-n="5" onclick="estoyNota('fel',5)">5</button><button type="button" class="ev-n" data-k="fel" data-n="6" onclick="estoyNota('fel',6)">6</button><button type="button" class="ev-n" data-k="fel" data-n="7" onclick="estoyNota('fel',7)">7</button><button type="button" class="ev-n" data-k="fel" data-n="8" onclick="estoyNota('fel',8)">8</button><button type="button" class="ev-n" data-k="fel" data-n="9" onclick="estoyNota('fel',9)">9</button><button type="button" class="ev-n" data-k="fel" data-n="10" onclick="estoyNota('fel',10)">10</button></div>
+      <div class="ev-preg">¿Qué me falta para que sea un 10?</div><textarea class="ev-ta" data-ev="fel_q" rows="2" placeholder=""></textarea>
+      <div style="height:.9rem"></div>
+      <div class="ev-lab">Cuánto disfruto mi día a día, del 1 al 10</div>
+      <div class="ev-notas"><button type="button" class="ev-n" data-k="dis" data-n="1" onclick="estoyNota('dis',1)">1</button><button type="button" class="ev-n" data-k="dis" data-n="2" onclick="estoyNota('dis',2)">2</button><button type="button" class="ev-n" data-k="dis" data-n="3" onclick="estoyNota('dis',3)">3</button><button type="button" class="ev-n" data-k="dis" data-n="4" onclick="estoyNota('dis',4)">4</button><button type="button" class="ev-n" data-k="dis" data-n="5" onclick="estoyNota('dis',5)">5</button><button type="button" class="ev-n" data-k="dis" data-n="6" onclick="estoyNota('dis',6)">6</button><button type="button" class="ev-n" data-k="dis" data-n="7" onclick="estoyNota('dis',7)">7</button><button type="button" class="ev-n" data-k="dis" data-n="8" onclick="estoyNota('dis',8)">8</button><button type="button" class="ev-n" data-k="dis" data-n="9" onclick="estoyNota('dis',9)">9</button><button type="button" class="ev-n" data-k="dis" data-n="10" onclick="estoyNota('dis',10)">10</button></div>
+      <div class="ev-preg">¿Qué me falta para que sea un 10?</div><textarea class="ev-ta" data-ev="dis_q" rows="2" placeholder=""></textarea>
+    </div>
+
+    <!-- EJERCICIO 2 -->
+    <div class="card ev-card">
+      <div class="ev-head"><span class="ev-badge">Ejercicio 2</span><div class="card-tit" style="margin:.35rem 0 0;font-size:18px">Mis cuatro columnas</div></div>
+      <div class="card-txt" style="margin-bottom:.8rem">Durante 3 días vas a ir anotando lo que haces y clasificándolo en cuatro columnas. Puedes hacerlo en el momento o por la noche, repasando tu día. No necesitas escribir mucho, solo ser honesta.</div>
+
+      <div class="ev-col" style="border-color:#E8A0BF">
+        <div class="ev-col-t">🩷 Me encanta</div>
+        <div class="card-txt">Lo que amo y quiero más. Anota también lo que me encanta <strong>pero casi no hago</strong>.</div>
+        <textarea class="ev-ta" data-ev="encanta" rows="4" placeholder="Lo que vayas descubriendo durante estos 3 días…"></textarea>
+        <div class="ev-preg">¿Cómo puedo tener más de esto?</div><textarea class="ev-ta" data-ev="encanta_q" rows="3" placeholder=""></textarea>
+      </div>
+
+      <div class="ev-col" style="border-color:#9DB4D6">
+        <div class="ev-col-t">☁️ Me drena</div>
+        <div class="card-txt">Lo que me quita energía.</div>
+        <textarea class="ev-ta" data-ev="drena" rows="4" placeholder="Lo que vayas descubriendo durante estos 3 días…"></textarea>
+        <div class="ev-preg">¿Qué tendría que cambiar para que pese menos?</div><textarea class="ev-ta" data-ev="drena_q" rows="3" placeholder=""></textarea>
+      </div>
+
+      <div class="ev-col" style="border-color:var(--do)">
+        <div class="ev-col-t">✅ Me hace sentir productiva</div>
+        <div class="card-txt">Lo que hago, o pienso que tengo que hacer, cuando siento que llevo mucho rato haciendo nada.</div>
+        <textarea class="ev-ta" data-ev="prod" rows="4" placeholder="Lo que vayas descubriendo durante estos 3 días…"></textarea>
+        <div class="ev-preg">¿Lo hago porque quiero, o para sentirme bien conmigo y no sentir culpa?</div><textarea class="ev-ta" data-ev="prod_q" rows="3" placeholder=""></textarea>
+      </div>
+
+      <div class="ev-col" style="border-color:var(--mo)">
+        <div class="ev-col-t">🔄 No quiero, pero tengo que <span style="font-weight:400;font-size:13px">(pero sí quiero mirarlo diferente)</span></div>
+        <div class="card-txt">Hay cosas que igual hay que hacer, y está bien. Aquí no las cambiamos: <strong>les cambiamos la mirada</strong>. Elige 3 cosas de esta semana que no puedes delegar y, para cada una, sigue estos 5 pasos:
+          <ol style="margin:.5rem 0 .2rem 1.1rem">
+            <li><strong>Elijo</strong> la cosa.</li>
+            <li><strong>Me pregunto para qué</strong> lo hago de verdad: <em>«Lo hago porque quiero…»</em></li>
+            <li><strong>Le busco un toque de disfrute:</strong> música, un té, una llamada, un podcast, un premio al terminar.</li>
+            <li><strong>Cambio la frase:</strong> de <em>«tengo que lavar los platos»</em> a <em>«elijo dejar mi casa lista para mañana»</em>.</li>
+            <li><strong>Me felicito</strong> al terminar: <em>«Mira lo bien que lo hice»</em>.</li>
+          </ol>
+        </div>
+        
+      <div class="ev-mini">
+        <div class="ev-mini-t">Mi «no quiero, pero tengo que» n.º 1</div>
+        <div class="ev-lab">1 · Elijo la cosa</div><textarea class="ev-ta" data-ev="t1_cosa" rows="2" placeholder="Ej: lavar los platos, ir al trámite…"></textarea>
+        <div class="ev-lab">2 · ¿Para qué lo hago de verdad? «Lo hago porque quiero…»</div><textarea class="ev-ta" data-ev="t1_para" rows="2" placeholder="cuidar a los míos, tener paz, sentirme ordenada…"></textarea>
+        <div class="ev-lab">3 · Mi toque de disfrute</div><textarea class="ev-ta" data-ev="t1_disf" rows="2" placeholder="música, un té, una llamada, un podcast, un premio al terminar"></textarea>
+        <div class="ev-lab">4 · Mi frase nueva (de «tengo que…» a «elijo…»)</div><textarea class="ev-ta" data-ev="t1_frase" rows="2" placeholder="«Elijo dejar mi casa lista para mañana»"></textarea>
+        <div class="ev-lab">5 · Mi felicitación al terminar</div><textarea class="ev-ta" data-ev="t1_felic" rows="2" placeholder="«Mira lo bien que lo hice»"></textarea>
+      </div>
+      <div class="ev-mini">
+        <div class="ev-mini-t">Mi «no quiero, pero tengo que» n.º 2</div>
+        <div class="ev-lab">1 · Elijo la cosa</div><textarea class="ev-ta" data-ev="t2_cosa" rows="2" placeholder="Ej: lavar los platos, ir al trámite…"></textarea>
+        <div class="ev-lab">2 · ¿Para qué lo hago de verdad? «Lo hago porque quiero…»</div><textarea class="ev-ta" data-ev="t2_para" rows="2" placeholder="cuidar a los míos, tener paz, sentirme ordenada…"></textarea>
+        <div class="ev-lab">3 · Mi toque de disfrute</div><textarea class="ev-ta" data-ev="t2_disf" rows="2" placeholder="música, un té, una llamada, un podcast, un premio al terminar"></textarea>
+        <div class="ev-lab">4 · Mi frase nueva (de «tengo que…» a «elijo…»)</div><textarea class="ev-ta" data-ev="t2_frase" rows="2" placeholder="«Elijo dejar mi casa lista para mañana»"></textarea>
+        <div class="ev-lab">5 · Mi felicitación al terminar</div><textarea class="ev-ta" data-ev="t2_felic" rows="2" placeholder="«Mira lo bien que lo hice»"></textarea>
+      </div>
+      <div class="ev-mini">
+        <div class="ev-mini-t">Mi «no quiero, pero tengo que» n.º 3</div>
+        <div class="ev-lab">1 · Elijo la cosa</div><textarea class="ev-ta" data-ev="t3_cosa" rows="2" placeholder="Ej: lavar los platos, ir al trámite…"></textarea>
+        <div class="ev-lab">2 · ¿Para qué lo hago de verdad? «Lo hago porque quiero…»</div><textarea class="ev-ta" data-ev="t3_para" rows="2" placeholder="cuidar a los míos, tener paz, sentirme ordenada…"></textarea>
+        <div class="ev-lab">3 · Mi toque de disfrute</div><textarea class="ev-ta" data-ev="t3_disf" rows="2" placeholder="música, un té, una llamada, un podcast, un premio al terminar"></textarea>
+        <div class="ev-lab">4 · Mi frase nueva (de «tengo que…» a «elijo…»)</div><textarea class="ev-ta" data-ev="t3_frase" rows="2" placeholder="«Elijo dejar mi casa lista para mañana»"></textarea>
+        <div class="ev-lab">5 · Mi felicitación al terminar</div><textarea class="ev-ta" data-ev="t3_felic" rows="2" placeholder="«Mira lo bien que lo hice»"></textarea>
+      </div>
+      </div>
+    </div>
+
+    <!-- EJERCICIO 3 -->
+    <div class="card ev-card">
+      <div class="ev-head"><span class="ev-badge">Ejercicio 3</span><div class="card-tit" style="margin:.35rem 0 0;font-size:18px">Le pongo nombre <span style="font-weight:400;font-size:13px">(2 veces esta semana)</span></div></div>
+      <div class="card-txt" style="margin-bottom:.8rem"><strong>Para qué sirve:</strong> no podemos cambiar lo que no reconocemos. Muchas veces ni sabemos qué sentimos, solo sabemos que estamos «mal», «raras» o sin ganas. Ponerle nombre ya baja el peso.<br><br>
+      <strong>Cuándo hacerlo:</strong> cuando note que mi ánimo o mi cuerpo cambian. Por ejemplo, cuando me da pereza de golpe, cuando me irrito por algo pequeño, cuando me quedo mirando la nada o cuando me siento apagada sin saber por qué.</div>
+      <div class="ev-box">
+        <div class="ev-col-t" style="margin-bottom:.4rem">Cómo hacerlo, en 3 pasos</div>
+        <div class="card-txt">
+          <strong>1. Paro 1 minuto</strong> y pregunto a mi cuerpo: <em>¿dónde lo siento?</em> (pecho apretado, hombros cargados, estómago cerrado, cabeza pesada).<br>
+          <strong>2. Elijo la emoción que más se parece.</strong> Si no encuentro una exacta, elijo la más cercana:
+          <div class="ev-chips"><span class="ev-chip">cansada</span><span class="ev-chip">aburrida</span><span class="ev-chip">triste</span><span class="ev-chip">sola</span><span class="ev-chip">frustrada</span><span class="ev-chip">culpable</span><span class="ev-chip">no valorada</span><span class="ev-chip">enojada</span><span class="ev-chip">preocupada</span><span class="ev-chip">ansiosa</span><span class="ev-chip">con vergüenza</span></div>
+          <strong>3. Completo la frase:</strong> <em>«Siento ___ porque estoy pensando que ___».</em>
+        </div>
+        <div class="ev-ej">
+          <div>«Siento cansancio porque estoy pensando que todo depende de mí.»</div>
+          <div>«Siento aburrimiento porque estoy pensando que ya no hay nada nuevo para mí.»</div>
+          <div>«Siento culpa porque estoy pensando que debería estar haciendo algo útil.»</div>
+        </div>
+      </div>
+      
+      <div class="ev-mini">
+        <div class="ev-mini-t">Vez n.º 1</div>
+        <div class="ev-lab">¿Dónde lo siento en mi cuerpo?</div><textarea class="ev-ta" data-ev="n1_donde" rows="2" placeholder="pecho apretado, hombros cargados, estómago cerrado…"></textarea>
+        <div class="ev-lab">Siento ___ porque estoy pensando que ___</div><textarea class="ev-ta" data-ev="n1_frase" rows="2" placeholder="Siento ______ porque estoy pensando que ______"></textarea>
+      </div>
+      <div class="ev-mini">
+        <div class="ev-mini-t">Vez n.º 2</div>
+        <div class="ev-lab">¿Dónde lo siento en mi cuerpo?</div><textarea class="ev-ta" data-ev="n2_donde" rows="2" placeholder="pecho apretado, hombros cargados, estómago cerrado…"></textarea>
+        <div class="ev-lab">Siento ___ porque estoy pensando que ___</div><textarea class="ev-ta" data-ev="n2_frase" rows="2" placeholder="Siento ______ porque estoy pensando que ______"></textarea>
+      </div>
+      <div class="principio" style="margin-bottom:0">
+        <div class="principio-label">Importante</div>
+        <div class="principio-sub" style="margin-top:0;font-size:12px;color:rgba(255,255,255,.9)">No es para juzgarme ni para arreglarlo, solo para nombrarlo. Si me sale un pensamiento duro, no lo discuto: lo anoto tal cual. En la próxima clase vamos a ver qué hacer con él.</div>
+      </div>
+    </div>
+
+    <!-- EJERCICIO 4 -->
+    <div class="card ev-card">
+      <div class="ev-head"><span class="ev-badge">Ejercicio 4</span><div class="card-tit" style="margin:.35rem 0 0;font-size:18px">La pregunta valiente <span style="font-weight:400;font-size:13px">(el último día)</span></div></div>
+      <div class="card-txt" style="margin-bottom:.4rem">Este es el ejercicio más valiente de la semana, por eso va al final. Hay cosas que llevamos tanto tiempo guardando que ni a la almohada se las hemos dicho. Para que algo cambie, primero tiene que <strong>salir de mí</strong>: escrito o hablado.</div>
+      <div class="principio">
+        <div class="principio-txt">«¿Qué cosa no me he atrevido ni a decirle a la almohada?»</div>
+      </div>
+      <div class="card-txt" style="margin-bottom:.6rem">La escribo, o me grabo un audio diciéndolo en voz alta. Después puedo borrarlo o romperlo. Es solo mío.</div>
+      <textarea class="ev-ta" data-ev="valiente" rows="6" placeholder="Aquí puedo escribir, o grabar un audio aparte y dejarlo salir…"></textarea>
+    </div>
+
+    <!-- EJERCICIO 5 -->
+    <div class="card ev-card">
+      <div class="ev-head"><span class="ev-badge">Ejercicio 5</span><div class="card-tit" style="margin:.35rem 0 0;font-size:18px">Cierro la semana</div></div>
+      <div class="card-txt" style="margin-bottom:.6rem">Para terminar, vuelve a mirar todo lo que anotaste y quédate con dos cosas.</div>
+      <div class="ev-lab">Una cosa que quiero SUMAR a mi vida</div>
+      <textarea class="ev-ta" data-ev="sumar" rows="2" placeholder=""></textarea>
+      <div class="ev-lab">Una cosa que quiero SOLTAR de mi mochila</div>
+      <textarea class="ev-ta" data-ev="soltar" rows="2" placeholder=""></textarea>
+    </div>
+
+    <div class="principio">
+      <div class="principio-txt">«El sol siempre está. Esta semana solo vamos a mirar qué nubes hay.» ☀️</div>
+    </div>
+    <div style="font-size:11px;color:var(--su);text-align:center;margin:.2rem 0 .6rem">✓ Lo que escribes se guarda solo</div>
+    <button class="btn btn-s" onclick="show('s-inicio')">← Volver al inicio</button>
   </div>
   <div class="ftr">Academia Mujer Fénix 40+</div>
 </div>
